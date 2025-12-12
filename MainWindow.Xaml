@@ -5,6 +5,7 @@ Title="ExampleSphericalSurfaceMesh3D / NET8 WPF"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:InteractiveExamples"
+             xmlns:vm="clr-namespace:InteractiveExamples.ViewModels"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Background="#202020">
     <Grid Name="gridBase">
@@ -20,8 +21,8 @@ Title="ExampleSphericalSurfaceMesh3D / NET8 WPF"
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Grid.Column="1">
-                <CheckBox Name="checkBoxSphericalGrid" Checked="CheckBoxSphericalGridCheckedChanged" Unchecked="CheckBoxSphericalGridCheckedChanged" IsChecked="True" Foreground="White">Spherical grid</CheckBox>
-                <CheckBox Name="checkBoxHeadingGrid" Checked="CheckBoxHeadingGridCheckedChanged" Unchecked="CheckBoxHeadingGridCheckedChanged" IsChecked="True" Foreground="White">Heading grid</CheckBox>
+                <CheckBox Name="checkBoxSphericalGrid" IsChecked="{Binding IsSphericalGridVisible, Mode=TwoWay}" Foreground="White">Spherical grid</CheckBox>
+                <CheckBox Name="checkBoxHeadingGrid" IsChecked="{Binding IsHeadingGridVisible, Mode=TwoWay}" Foreground="White">Heading grid</CheckBox>
             </StackPanel>
             <Grid Margin="0,8,0,0" VerticalAlignment="Top" Grid.Row="2">
                 <Grid.RowDefinitions>
@@ -41,12 +42,12 @@ Title="ExampleSphericalSurfaceMesh3D / NET8 WPF"
                         <ColumnDefinition Width="1*"/>
                     </Grid.ColumnDefinitions>
                     <Label Content="Width:" Height="28" Name="label2" Grid.Row="0" Grid.Column="0" Foreground="White"/>
-                    <TextBox Grid.Row="0" Grid.Column="1" Height="23" Width="32" x:Name="textBoxExWidth" TextChanged="TextBoxExWidthTextChanged"/>
-                    <Button Grid.Row="0" Grid.Column="3" Content="Top view 2D" Name="buttonTopView2D" Click="ButtonTopView2DClick" Margin="2" />
+                    <TextBox Grid.Row="0" Grid.Column="1" Height="23" Width="32" x:Name="textBoxExWidth" Text="{Binding WidthText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Grid.Row="0" Grid.Column="3" Content="Top view 2D" Name="buttonTopView2D" Command="{Binding TopView2DCommand}" Margin="2" />
                     <Label Grid.Row="1" Grid.Column="0" Content="Height:" Height="28" Name="label3" Foreground="White"/>
-                    <TextBox Grid.Row="1" Grid.Column="1" Height="23" Width="32" x:Name="textBoxExHeight" TextChanged="TextBoxExHeightTextChanged"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" Height="23" Width="32" x:Name="textBoxExHeight" Text="{Binding HeightText, UpdateSourceTrigger=PropertyChanged}"/>
                     <Label Grid.Row="2" Grid.Column="0" Content="Depth:" Height="28" Name="label4" Foreground="White"/>
-                    <TextBox Grid.Row="2" Grid.Column="1" Height="23" Width="32" x:Name="textBoxExDepth" TextChanged="TextBoxExDepthTextChanged"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Height="23" Width="32" x:Name="textBoxExDepth" Text="{Binding DepthText, UpdateSourceTrigger=PropertyChanged}"/>
                 </Grid>
                 <Grid Grid.Row="1">
                     <Grid.RowDefinitions>
@@ -67,28 +68,28 @@ Title="ExampleSphericalSurfaceMesh3D / NET8 WPF"
                         <RowDefinition Height="5"/>
                     </Grid.RowDefinitions>
                     <Label Grid.Row="0" Grid.Column="0" Height="28" Name="CameraModeLabel" Foreground="White">Camera Orientation</Label>
-                    <ComboBox Grid.Row="1" Grid.Column="0" Height="28" SelectedIndex ="1" Name="comboBoxCamera" SelectionChanged="ComboBoxCameraSelectionChanged" Margin="2">
+                    <ComboBox Grid.Row="1" Grid.Column="0" Height="28" SelectedIndex="{Binding SelectedCameraIndex, Mode=TwoWay}" Name="comboBoxCamera" Margin="2">
                         <ComboBoxItem>XYZ_Mixed</ComboBoxItem>
                         <ComboBoxItem>ZXY_Extrinsic</ComboBoxItem>
                     </ComboBox>
                     <Label Grid.Row="2" Grid.Column="0" Height="28" Name="label6" Foreground="White">Projection type</Label>
-                    <ComboBox  Grid.Row="3" Grid.Column="0" Height="28" SelectedIndex ="2" Name="comboBoxProjection" SelectionChanged="ComboBoxProjectionSelectionChanged" Margin="2">
+                    <ComboBox  Grid.Row="3" Grid.Column="0" Height="28" SelectedIndex="{Binding SelectedProjectionIndex, Mode=TwoWay}" Name="comboBoxProjection" Margin="2">
                         <ComboBoxItem>Orthographic</ComboBoxItem>
                         <ComboBoxItem>Orthographic Legacy</ComboBoxItem>
                         <ComboBoxItem>Perspective</ComboBoxItem>
                     </ComboBox>
                     <Label Grid.Row="4" Grid.Column="0" Height="28" Name="label5" Foreground="White">Vertical rotation (pitch)</Label>
-                    <Slider Grid.Row="5" Grid.Column="0" Name="sliderVerticalRotation" Maximum="90" Minimum="-90" Margin="0,0,50,0"/>
+                    <Slider Grid.Row="5" Grid.Column="0" Name="sliderVerticalRotation" Maximum="90" Minimum="-90" Value="{Binding VerticalRotation, Mode=TwoWay}" Margin="0,0,50,0"/>
                     <Label Grid.Row="6" Grid.Column="0" Height="28" Name="label7" Foreground="White">Horizontal rotation (yaw)</Label>
-                    <Slider Grid.Row="7" Grid.Column="0" Name="sliderHorizontalRotation" Maximum="180" Minimum="-180" Margin="0,0,50,0"/>
+                    <Slider Grid.Row="7" Grid.Column="0" Name="sliderHorizontalRotation" Maximum="180" Minimum="-180" Value="{Binding HorizontalRotation, Mode=TwoWay}" Margin="0,0,50,0"/>
                     <Label Grid.Row="8" Grid.Column="0" Height="28" Name="label8" Foreground="White">Side rotation (roll)</Label>
-                    <Slider Grid.Row="9" Grid.Column="0" Name="sliderSideRotation" Maximum="180" Minimum="-180" Margin="0,0,50,0"/>
+                    <Slider Grid.Row="9" Grid.Column="0" Name="sliderSideRotation" Maximum="180" Minimum="-180" Value="{Binding SideRotation, Mode=TwoWay}" Margin="0,0,50,0"/>
                     <Label Grid.Row="10" Grid.Column="0" Height="28" Name="label9" Foreground="White">Distance</Label>
-                    <Slider Grid.Row="11" Grid.Column="0" Name="sliderDistance" Minimum="10" Maximum="2000" Cursor="" Margin="0,0,50,0"/>
-                    <TextBox x:Name="tbVerticalRotation" HorizontalAlignment="Right" Margin="0,0,5,0" Grid.Row="5" TextWrapping="Wrap" Width="35" TextChanged="TbVerticalRotationTextChanged"/>
-                    <TextBox x:Name="tbHorizontalRotation" HorizontalAlignment="Right" Margin="0,0,5,0" Grid.Row="7" TextWrapping="Wrap" Width="35" TextChanged="TbHorizontalRotationTextChanged"/>
-                    <TextBox x:Name="tbSideRotation" HorizontalAlignment="Right" Height="18" Margin="0,0,5,0" Grid.Row="9" TextWrapping="Wrap" VerticalAlignment="Top" Width="35" TextChanged="TbSideRotationTextChanged"/>
-                    <TextBox x:Name="tbDistance" HorizontalAlignment="Right" Height="18" Margin="0,0,5,0" Grid.Row="11" TextWrapping="Wrap" VerticalAlignment="Top" Width="35" TextChanged="TbDistanceTextChanged"/>
+                    <Slider Grid.Row="11" Grid.Column="0" Name="sliderDistance" Minimum="10" Maximum="2000" IsEnabled="{Binding IsDistanceEnabled}" Value="{Binding Distance, Mode=TwoWay}" Cursor="" Margin="0,0,50,0"/>
+                    <TextBox x:Name="tbVerticalRotation" HorizontalAlignment="Right" Margin="0,0,5,0" Grid.Row="5" TextWrapping="Wrap" Width="35" Text="{Binding VerticalRotationText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox x:Name="tbHorizontalRotation" HorizontalAlignment="Right" Margin="0,0,5,0" Grid.Row="7" TextWrapping="Wrap" Width="35" Text="{Binding HorizontalRotationText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox x:Name="tbSideRotation" HorizontalAlignment="Right" Height="18" Margin="0,0,5,0" Grid.Row="9" TextWrapping="Wrap" VerticalAlignment="Top" Width="35" Text="{Binding SideRotationText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox x:Name="tbDistance" HorizontalAlignment="Right" Height="18" Margin="0,0,5,0" Grid.Row="11" TextWrapping="Wrap" VerticalAlignment="Top" Width="35" Text="{Binding DistanceText, UpdateSourceTrigger=PropertyChanged}"/>
                 </Grid>
             </Grid>
         </Grid>
