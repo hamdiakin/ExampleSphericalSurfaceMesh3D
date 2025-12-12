@@ -65,7 +65,7 @@ namespace InteractiveExamples.Services
 
         public Annotation3D CreateMouseTrackAnnotation(View3D view3D)
         {
-            Annotation3D annotation = new Annotation3D(view3D, Axis3DBinding.Primary, Axis3DBinding.Primary, Axis3DBinding.Primary)
+            Annotation3D annotation = new(view3D, Axis3DBinding.Primary, Axis3DBinding.Primary, Axis3DBinding.Primary)
             {
                 TargetCoordinateSystem = AnnotationTargetCoordinates.AxisValues
             };
@@ -141,7 +141,7 @@ namespace InteractiveExamples.Services
             annotation.TargetAxisValues.SetValues(0, 0, 0);
             annotation.LocationCoordinateSystem = CoordinateSystem.AxisValues;
             annotation.Style = AnnotationStyle.Arrow;
-            annotation.ArrowStyleBegin = ArrowStyle.Circle;
+            annotation.ArrowStyleBegin = ArrowStyle.Arrow;
             annotation.ArrowStyleEnd = ArrowStyle.Circle;
             annotation.AllowUserInteraction = false;
             annotation.ArrowLineStyle.Color = Color.FromArgb(255, 30, 30, 30);

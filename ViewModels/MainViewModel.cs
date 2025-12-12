@@ -8,6 +8,7 @@ using LightningChartLib.WPF.Charting.Views.ViewPie3D;
 using System;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace InteractiveExamples.ViewModels
 {
@@ -54,6 +55,14 @@ namespace InteractiveExamples.ViewModels
         private readonly ChartSetupService chartSetupService;
         private readonly CameraService cameraService;
         private readonly MouseTrackingService mouseTrackingService;
+        private DataPointAnnotationService? dataPointAnnotationService;
+
+        #endregion
+
+        #region Fields - Animation Timer
+
+        private DispatcherTimer? dataPointUpdateTimer;
+        private DateTime lastUpdateTime;
 
         #endregion
 
@@ -84,6 +93,8 @@ namespace InteractiveExamples.ViewModels
                 }
             }
         }
+
+        public DataPointAnnotationService? DataPointAnnotationService => dataPointAnnotationService;
 
         #endregion
 
@@ -334,6 +345,9 @@ namespace InteractiveExamples.ViewModels
             headingGrid = chartSetupService.CreateHeadingGrid(view3D, isHeadingGridVisible);
             mouseTrackAnnotation = chartSetupService.CreateMouseTrackAnnotation(view3D);
 
+            dataPointAnnotationService = new DataPointAnnotationService(view3D);
+            dataPointAnnotationService.GenerateDataPoints(50);
+
             chart.MouseMove += ChartMouseMove;
             chartSetupService.HideAxesAndWalls(view3D);
 
@@ -342,6 +356,7 @@ namespace InteractiveExamples.ViewModels
             InitializeViewReference();
             SetControlValuesFromChart();
             SetViewPoint();
+            StartDataPointAnimation();
         }
 
         private void InitializeViewReference()
@@ -537,10 +552,59 @@ namespace InteractiveExamples.ViewModels
 
         #endregion
 
+        #region Data Point Animation
+
+        private void StartDataPointAnimation()
+        {
+            if (dataPointUpdateTimer != null)
+            {
+                dataPointUpdateTimer.Stop();
+                dataPointUpdateTimer = null;
+            }
+
+            if (dataPointAnnotationService == null) return;
+
+            dataPointUpdateTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(16) // ~60 FPS
+            };
+            dataPointUpdateTimer.Tick += DataPointUpdateTimer_Tick;
+            lastUpdateTime = DateTime.Now;
+            dataPointUpdateTimer.Start();
+        }
+
+        private void StopDataPointAnimation()
+        {
+            if (dataPointUpdateTimer != null)
+            {
+                dataPointUpdateTimer.Stop();
+                dataPointUpdateTimer.Tick -= DataPointUpdateTimer_Tick;
+                dataPointUpdateTimer = null;
+            }
+        }
+
+        private void DataPointUpdateTimer_Tick(object? sender, EventArgs e)
+        {
+            if (dataPointAnnotationService == null || chart == null) return;
+
+            DateTime currentTime = DateTime.Now;
+            double deltaTimeSeconds = (currentTime - lastUpdateTime).TotalSeconds;
+            lastUpdateTime = currentTime;
+
+            chart.BeginUpdate();
+            dataPointAnnotationService.UpdateDataPointsClockwise(deltaTimeSeconds);
+            chart.EndUpdate();
+        }
+
+        #endregion
+
         #region Cleanup
 
         public void Dispose()
         {
+            StopDataPointAnimation();
+            dataPointAnnotationService?.ClearExistingData();
+            
             if (chart != null)
             {
                 chart.Dispose();
