@@ -506,6 +506,21 @@ namespace InteractiveExamples.ViewModels
         private void ChartMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             mouseTrackingService.HandleMouseMove(surfaceSeries, mouseTrackAnnotation, chart, e);
+            
+            // Handle proximity detection for data point annotations
+            if (dataPointAnnotationService != null && chart != null)
+            {
+                try
+                {
+                    Point mousePosition = e.GetPosition(e.Source as UIElement);
+                    dataPointAnnotationService.HandleMouseMove(chart, mousePosition);
+                }
+                catch
+                {
+                    // If mouse is outside chart bounds, clear hover state
+                    dataPointAnnotationService.ClearHoverState();
+                }
+            }
         }
 
         private void ViewPointEditorCameraViewChanged(Camera3D newCameraViewPoint, View3D view, LightningChart chart)
