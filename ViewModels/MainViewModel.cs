@@ -414,7 +414,7 @@ namespace InteractiveExamples.ViewModels
             mouseTrackAnnotation = chartSetupService.CreateMouseTrackAnnotation(view3D);
 
             dataPointAnnotationService = new DataPointAnnotationService(view3D);
-            dataPointAnnotationService.GenerateDataPoints(50);
+            dataPointAnnotationService.GenerateDataPoints(5000);
             dataPointAnnotationService.SetMouseTrackingEnabled(isMouseTrackingEnabled);
             UpdateAnnotationCountText();
 
