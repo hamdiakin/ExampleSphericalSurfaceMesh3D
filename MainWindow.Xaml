@@ -37,6 +37,27 @@ Title="ExampleSphericalSurfaceMesh3D / NET8 WPF"
                 </Grid>
                 <Button Content="Delete Last" Command="{Binding DeleteAnnotationCommand}" Margin="0,4,0,0" Height="25"/>
                 <CheckBox IsChecked="{Binding IsMouseTrackingEnabled, Mode=TwoWay}" Foreground="White" Margin="0,8,0,0" Content="Mouse Track"/>
+                <Separator Margin="0,8,0,8" Background="Gray"/>
+                <Label Content="Selection" Foreground="White" FontWeight="Bold" Margin="0,0,0,4"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="Enter ID:" Grid.Column="0" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Grid.Column="1" Height="23" Text="{Binding SelectIndexText, UpdateSourceTrigger=PropertyChanged}" ToolTip="Enter annotation index to select"/>
+                </Grid>
+                <Grid Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="Selected:" Grid.Column="0" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Grid.Column="1" Height="23" Text="{Binding SelectedAnnotationText, Mode=OneWay}" IsReadOnly="True" Background="#333"/>
+                </Grid>
+                <Button Content="Delete Selected" Command="{Binding DeleteSelectedAnnotationCommand}" Margin="0,4,0,0" Height="25" IsEnabled="{Binding HasSelectedAnnotation}"/>
+                <Button Content="Clear Selection" Command="{Binding ClearSelectionCommand}" Margin="0,4,0,0" Height="25" IsEnabled="{Binding HasSelectedAnnotation}"/>
+                <TextBlock Text="Indices shown on annotations" Foreground="Gray" FontSize="10" Margin="0,4,0,0"/>
             </StackPanel>
             <Grid Margin="0,8,0,0" VerticalAlignment="Top" Grid.Row="2">
                 <Grid.RowDefinitions>

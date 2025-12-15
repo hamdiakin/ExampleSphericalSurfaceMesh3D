@@ -48,6 +48,9 @@ namespace InteractiveExamples.ViewModels
         private PointDoubleXYZ? oldDimensionsLegacy;
         private string annotationCountText = "50";
         private bool isMouseTrackingEnabled = true;
+        private string selectedAnnotationText = "None";
+        private bool hasSelectedAnnotation = false;
+        private string selectIndexText = "";
 
         #endregion
 
@@ -81,6 +84,8 @@ namespace InteractiveExamples.ViewModels
             AddAnnotationCommand = new RelayCommand(parameter => ExecuteAddAnnotation(), parameter => CanExecuteAnnotationCommand());
             DeleteAnnotationCommand = new RelayCommand(parameter => ExecuteDeleteAnnotation(), parameter => CanExecuteAnnotationCommand());
             ToggleMouseTrackingCommand = new RelayCommand(parameter => ExecuteToggleMouseTracking(), parameter => CanExecuteAnnotationCommand());
+            DeleteSelectedAnnotationCommand = new RelayCommand(parameter => ExecuteDeleteSelectedAnnotation(), parameter => HasSelectedAnnotation);
+            ClearSelectionCommand = new RelayCommand(parameter => ExecuteClearSelection(), parameter => HasSelectedAnnotation);
         }
 
         #endregion
@@ -334,6 +339,8 @@ namespace InteractiveExamples.ViewModels
         public ICommand AddAnnotationCommand { get; }
         public ICommand DeleteAnnotationCommand { get; }
         public ICommand ToggleMouseTrackingCommand { get; }
+        public ICommand DeleteSelectedAnnotationCommand { get; }
+        public ICommand ClearSelectionCommand { get; }
 
         #endregion
 
@@ -355,6 +362,34 @@ namespace InteractiveExamples.ViewModels
                     if (dataPointAnnotationService != null)
                     {
                         dataPointAnnotationService.SetMouseTrackingEnabled(value);
+                    }
+                }
+            }
+        }
+
+        public string SelectedAnnotationText
+        {
+            get => selectedAnnotationText;
+            set => SetProperty(ref selectedAnnotationText, value);
+        }
+
+        public bool HasSelectedAnnotation
+        {
+            get => hasSelectedAnnotation;
+            set => SetProperty(ref hasSelectedAnnotation, value);
+        }
+
+        public string SelectIndexText
+        {
+            get => selectIndexText;
+            set
+            {
+                if (SetProperty(ref selectIndexText, value))
+                {
+                    // Try to select the annotation when text changes
+                    if (int.TryParse(value, out int index))
+                    {
+                        SelectAnnotationByIndex(index);
                     }
                 }
             }
@@ -624,6 +659,75 @@ namespace InteractiveExamples.ViewModels
         private void ExecuteToggleMouseTracking()
         {
             IsMouseTrackingEnabled = !IsMouseTrackingEnabled;
+        }
+
+        private void ExecuteDeleteSelectedAnnotation()
+        {
+            if (dataPointAnnotationService == null || chart == null) return;
+
+            chart.BeginUpdate();
+            if (dataPointAnnotationService.DeleteSelectedAnnotation())
+            {
+                UpdateAnnotationCountText();
+                UpdateSelectedAnnotationInfo();
+            }
+            chart.EndUpdate();
+        }
+
+        private void ExecuteClearSelection()
+        {
+            if (dataPointAnnotationService == null) return;
+
+            dataPointAnnotationService.ClearSelection();
+            UpdateSelectedAnnotationInfo();
+        }
+
+        private void UpdateSelectedAnnotationInfo()
+        {
+            if (dataPointAnnotationService == null)
+            {
+                SelectedAnnotationText = "None";
+                HasSelectedAnnotation = false;
+                return;
+            }
+
+            var info = dataPointAnnotationService.GetSelectedAnnotationInfo();
+            if (info.HasValue)
+            {
+                SelectedAnnotationText = $"ID: {info.Value.index}";
+                HasSelectedAnnotation = true;
+            }
+            else
+            {
+                SelectedAnnotationText = "None";
+                HasSelectedAnnotation = false;
+            }
+        }
+
+        /// <summary>
+        /// Handles mouse click for annotation selection
+        /// </summary>
+        public void HandleAnnotationSelection(Point mousePosition)
+        {
+            if (dataPointAnnotationService == null || chart == null) return;
+
+            chart.BeginUpdate();
+            dataPointAnnotationService.SelectAnnotationAtPosition(chart, mousePosition);
+            UpdateSelectedAnnotationInfo();
+            chart.EndUpdate();
+        }
+
+        /// <summary>
+        /// Selects an annotation by its index
+        /// </summary>
+        private void SelectAnnotationByIndex(int index)
+        {
+            if (dataPointAnnotationService == null || chart == null) return;
+
+            chart.BeginUpdate();
+            dataPointAnnotationService.SelectAnnotationByIndex(index);
+            UpdateSelectedAnnotationInfo();
+            chart.EndUpdate();
         }
 
         #endregion

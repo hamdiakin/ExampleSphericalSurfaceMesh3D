@@ -29,6 +29,9 @@ namespace InteractiveExamples.Services
 
         private int? hoveredAnnotationIndex = null;
         private bool isMouseTrackingEnabled = true;
+        private int? selectedAnnotationIndex = null;
+
+        public int? SelectedAnnotationIndex => selectedAnnotationIndex;
 
         public void GenerateDataPoints(int n, Random? random = null)
         {
@@ -116,8 +119,15 @@ namespace InteractiveExamples.Services
                 // Update the annotation position to match the new data point position
                 UpdateAnnotationForDataPoint(i, dataPoint);
                 
-                // Update text based on mouse tracking state
-                if (!isMouseTrackingEnabled)
+                // Update text based on selection and mouse tracking state
+                bool isSelected = selectedAnnotationIndex.HasValue && selectedAnnotationIndex.Value == i;
+                
+                if (isSelected)
+                {
+                    // Always update selected annotation text with special format
+                    UpdateSelectedAnnotationText(i);
+                }
+                else if (!isMouseTrackingEnabled)
                 {
                     // When mouse tracking is disabled, update all texts
                     ShowAnnotationText(i);
@@ -139,6 +149,15 @@ namespace InteractiveExamples.Services
                 throw new ArgumentNullException(nameof(dataPoint));
 
             Annotation3D annotation = annotations[index];
+            bool isSelected = selectedAnnotationIndex.HasValue && selectedAnnotationIndex.Value == index;
+            
+            // For selected annotation, only update position, preserve all styling
+            if (isSelected)
+            {
+                // Only update position coordinates
+                annotation.LocationAxisValues.SetValues(dataPoint.X, dataPoint.Y, dataPoint.Z);
+                return;
+            }
             
             // Preserve text if this annotation is currently being hovered
             string? preservedText = null;
@@ -218,7 +237,7 @@ namespace InteractiveExamples.Services
         /// <param name="chart">The LightningChart instance</param>
         /// <param name="mousePosition">Mouse position in screen coordinates</param>
         /// <param name="proximityThreshold">Distance threshold in pixels for considering mouse "near" an annotation</param>
-        public void HandleMouseMove(LightningChart chart, Point mousePosition, double proximityThreshold = 50.0)
+        public void HandleMouseMove(LightningChart chart, Point mousePosition, double proximityThreshold = 80.0)
         {
             if (chart == null || annotations.Count == 0) return;
 
@@ -248,7 +267,7 @@ namespace InteractiveExamples.Services
 
         /// <summary>
         /// Finds the nearest annotation to the mouse position
-        /// Uses a simplified approach: calculates which annotation's 3D position projects closest to mouse
+        /// Uses camera rotation to improve 3D to 2D projection accuracy
         /// </summary>
         private int? FindNearestAnnotation(LightningChart chart, Point mousePosition, double threshold)
         {
@@ -257,9 +276,16 @@ namespace InteractiveExamples.Services
             int nearestIndex = -1;
             double minDistance = double.MaxValue;
 
-            // Get chart center and dimensions for projection calculation
-            double chartCenterX = chart.ActualWidth / 2.0;
-            double chartCenterY = chart.ActualHeight / 2.0;
+            // Get chart dimensions
+            double chartWidth = chart.ActualWidth;
+            double chartHeight = chart.ActualHeight;
+            double chartCenterX = chartWidth / 2.0;
+            double chartCenterY = chartHeight / 2.0;
+
+            // Get camera rotation angles in radians
+            double rotX = chart.View3D.Camera.RotationX * Math.PI / 180.0;
+            double rotY = chart.View3D.Camera.RotationY * Math.PI / 180.0;
+            double rotZ = chart.View3D.Camera.RotationZ * Math.PI / 180.0;
 
             for (int i = 0; i < annotations.Count; i++)
             {
@@ -268,17 +294,27 @@ namespace InteractiveExamples.Services
 
                 // Get the data point's position in 3D space
                 SphereDataPoint dataPoint = dataPoints[i];
-                
-                // Simplified projection: map 3D coordinates to screen space
-                // This is an approximation - for accurate results, you'd need the proper coordinate conversion API
-                // We'll use the X,Y coordinates scaled to screen space as an approximation
-                double screenX = chartCenterX + (dataPoint.X / 100.0) * (chart.ActualWidth / 4.0);
-                double screenY = chartCenterY - (dataPoint.Y / 100.0) * (chart.ActualHeight / 4.0);
-                
-                // Adjust for Z depth (points further away appear smaller)
-                double zScale = 1.0 + (dataPoint.Z / 200.0);
-                screenX *= zScale;
-                screenY *= zScale;
+                double x = dataPoint.X;
+                double y = dataPoint.Y;
+                double z = dataPoint.Z;
+
+                // Apply rotation transformations (simplified - rotate around Y axis first, then X)
+                // Rotate around Y axis
+                double cosY = Math.Cos(rotY);
+                double sinY = Math.Sin(rotY);
+                double x1 = x * cosY + z * sinY;
+                double z1 = -x * sinY + z * cosY;
+
+                // Rotate around X axis
+                double cosX = Math.Cos(rotX);
+                double sinX = Math.Sin(rotX);
+                double y1 = y * cosX - z1 * sinX;
+                double z2 = y * sinX + z1 * cosX;
+
+                // Project to screen (orthographic-like projection)
+                double scale = Math.Min(chartWidth, chartHeight) / 300.0;
+                double screenX = chartCenterX + x1 * scale;
+                double screenY = chartCenterY - y1 * scale;
 
                 // Calculate distance from mouse to projected annotation position
                 double distance = Math.Sqrt(
@@ -297,28 +333,55 @@ namespace InteractiveExamples.Services
         }
 
         /// <summary>
-        /// Shows X and Y values as text on the annotation
+        /// Shows index, X and Y values as text on the annotation
         /// </summary>
         private void ShowAnnotationText(int index)
+        {
+            if (index < 0 || index >= annotations.Count || index >= dataPoints.Count) return;
+            
+            // Don't overwrite selected annotation's special styling
+            if (selectedAnnotationIndex.HasValue && selectedAnnotationIndex.Value == index)
+            {
+                return;
+            }
+
+            Annotation3D annotation = annotations[index];
+            SphereDataPoint dataPoint = dataPoints[index];
+
+            // Update text with index and current X, Y values
+            annotation.Text = $"[{index}]\nX: {dataPoint.X:F1}\nY: {dataPoint.Y:F1}";
+            
+            // Update text position to be at the tip of the arrow (Target end)
+            annotation.Anchor.Y = 1; // End of annotation (arrow tip)
+        }
+        
+        /// <summary>
+        /// Updates text for selected annotation (with special format, preserves styling)
+        /// </summary>
+        private void UpdateSelectedAnnotationText(int index)
         {
             if (index < 0 || index >= annotations.Count || index >= dataPoints.Count) return;
 
             Annotation3D annotation = annotations[index];
             SphereDataPoint dataPoint = dataPoints[index];
 
-            // Update text with current X and Y values
-            annotation.Text = $"X: {dataPoint.X:F1}\nY: {dataPoint.Y:F1}";
-            
-            // Update text position to be at the tip of the arrow (Target end)
-            annotation.Anchor.Y = 1; // End of annotation (arrow tip)
+            // Update text with special selected format and current X, Y values
+            annotation.Text = $">>> [{index}] <<<\nX: {dataPoint.X:F1}\nY: {dataPoint.Y:F1}";
+            annotation.Anchor.Y = 1;
         }
 
         /// <summary>
-        /// Clears the annotation text
+        /// Clears the annotation text (but not for selected annotation)
         /// </summary>
         private void ClearAnnotationText(int index)
         {
             if (index < 0 || index >= annotations.Count) return;
+            
+            // Don't clear text for selected annotation - it should always be visible
+            if (selectedAnnotationIndex.HasValue && selectedAnnotationIndex.Value == index)
+            {
+                return;
+            }
 
             Annotation3D annotation = annotations[index];
             annotation.Text = string.Empty;
@@ -388,29 +451,228 @@ namespace InteractiveExamples.Services
         }
 
         /// <summary>
-        /// Shows text on all annotations
+        /// Shows text on all annotations (preserving selected annotation's special styling)
         /// </summary>
         private void ShowAllAnnotationTexts()
         {
             for (int i = 0; i < annotations.Count && i < dataPoints.Count; i++)
             {
+                // Skip selected annotation - it has its own special styling
+                if (selectedAnnotationIndex.HasValue && selectedAnnotationIndex.Value == i)
+                {
+                    continue;
+                }
+                
                 Annotation3D annotation = annotations[i];
                 SphereDataPoint dataPoint = dataPoints[i];
-                annotation.Text = $"X: {dataPoint.X:F1}\nY: {dataPoint.Y:F1}";
+                annotation.Text = $"[{i}]\nX: {dataPoint.X:F1}\nY: {dataPoint.Y:F1}";
                 annotation.Anchor.Y = 1;
             }
         }
 
         /// <summary>
-        /// Clears text on all annotations
+        /// Clears text on all annotations (but not for selected annotation)
         /// </summary>
         private void ClearAllAnnotationTexts()
         {
-            foreach (var annotation in annotations)
+            for (int i = 0; i < annotations.Count; i++)
+            {
+                // Skip selected annotation - it should always be visible
+                if (selectedAnnotationIndex.HasValue && selectedAnnotationIndex.Value == i)
+                {
+                    continue;
+                }
+                
+                annotations[i].Text = string.Empty;
+            }
+            hoveredAnnotationIndex = null;
+        }
+
+        /// <summary>
+        /// Selects an annotation by clicking near it
+        /// </summary>
+        /// <param name="chart">The LightningChart instance</param>
+        /// <param name="mousePosition">Mouse position in screen coordinates</param>
+        /// <param name="proximityThreshold">Distance threshold in pixels</param>
+        /// <returns>True if selection state changed, false otherwise</returns>
+        public bool SelectAnnotationAtPosition(LightningChart chart, Point mousePosition, double proximityThreshold = 80.0)
+        {
+            if (chart == null) return false;
+
+            int? nearestIndex = annotations.Count > 0 
+                ? FindNearestAnnotation(chart, mousePosition, proximityThreshold) 
+                : null;
+
+            // Clear previous selection visual
+            if (selectedAnnotationIndex.HasValue && selectedAnnotationIndex.Value < annotations.Count)
+            {
+                ClearSelectionVisual(selectedAnnotationIndex.Value);
+            }
+
+            int? previousSelection = selectedAnnotationIndex;
+            selectedAnnotationIndex = nearestIndex;
+
+            // Apply selection visual to new selection
+            if (selectedAnnotationIndex.HasValue && selectedAnnotationIndex.Value < annotations.Count)
+            {
+                ApplySelectionVisual(selectedAnnotationIndex.Value);
+            }
+
+            // Return true if selection changed (including from something to nothing or nothing to something)
+            return previousSelection != selectedAnnotationIndex;
+        }
+
+        /// <summary>
+        /// Selects an annotation by its index
+        /// </summary>
+        /// <param name="index">Index of the annotation to select (-1 or out of range clears selection)</param>
+        /// <returns>True if selection was successful, false if index is invalid</returns>
+        public bool SelectAnnotationByIndex(int index)
+        {
+            // Clear previous selection visual
+            if (selectedAnnotationIndex.HasValue && selectedAnnotationIndex.Value < annotations.Count)
+            {
+                ClearSelectionVisual(selectedAnnotationIndex.Value);
+            }
+
+            // Check if index is valid
+            if (index < 0 || index >= annotations.Count)
+            {
+                selectedAnnotationIndex = null;
+                return false;
+            }
+
+            selectedAnnotationIndex = index;
+            ApplySelectionVisual(index);
+            return true;
+        }
+
+        /// <summary>
+        /// Clears the current selection
+        /// </summary>
+        public void ClearSelection()
+        {
+            if (selectedAnnotationIndex.HasValue && selectedAnnotationIndex.Value < annotations.Count)
+            {
+                ClearSelectionVisual(selectedAnnotationIndex.Value);
+            }
+            selectedAnnotationIndex = null;
+        }
+
+        /// <summary>
+        /// Deletes the currently selected annotation
+        /// </summary>
+        /// <returns>True if an annotation was deleted, false if nothing was selected</returns>
+        public bool DeleteSelectedAnnotation()
+        {
+            if (!selectedAnnotationIndex.HasValue || selectedAnnotationIndex.Value >= annotations.Count)
+                return false;
+
+            int indexToDelete = selectedAnnotationIndex.Value;
+
+            // Clear hover state if the selected annotation is hovered
+            if (hoveredAnnotationIndex == indexToDelete)
+            {
+                ClearAnnotationText(indexToDelete);
+                hoveredAnnotationIndex = null;
+            }
+            else if (hoveredAnnotationIndex > indexToDelete)
+            {
+                hoveredAnnotationIndex--;
+            }
+
+            // Remove the annotation
+            Annotation3D annotation = annotations[indexToDelete];
+            view3D.Annotations.Remove(annotation);
+            annotations.RemoveAt(indexToDelete);
+            dataPoints.RemoveAt(indexToDelete);
+
+            // Clear selection
+            selectedAnnotationIndex = null;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Gets information about the selected annotation
+        /// </summary>
+        public (int index, double x, double y, double z)? GetSelectedAnnotationInfo()
+        {
+            if (!selectedAnnotationIndex.HasValue || selectedAnnotationIndex.Value >= dataPoints.Count)
+                return null;
+
+            var dataPoint = dataPoints[selectedAnnotationIndex.Value];
+            return (selectedAnnotationIndex.Value, dataPoint.X, dataPoint.Y, dataPoint.Z);
+        }
+
+        /// <summary>
+        /// Applies visual feedback for selected annotation (bold text, thicker line, visible text, highlight color)
+        /// </summary>
+        private void ApplySelectionVisual(int index)
+        {
+            if (index < 0 || index >= annotations.Count || index >= dataPoints.Count) return;
+
+            Annotation3D annotation = annotations[index];
+            SphereDataPoint dataPoint = dataPoints[index];
+
+            // Make the line much thicker for selected annotation
+            annotation.ArrowLineStyle.Width = 4;
+            
+            // Make text bold and larger
+            annotation.TextStyle.Font = new WpfFont("Segoe UI", 14, true, false);
+            
+            // Set highlight color (bright yellow for visibility)
+            annotation.TextStyle.Color = System.Windows.Media.Colors.Yellow;
+            annotation.ArrowLineStyle.Color = System.Windows.Media.Colors.Yellow;
+            
+            // Add visible border
+            annotation.BorderVisible = true;
+            annotation.BorderLineStyle.Color = System.Windows.Media.Colors.Yellow;
+            annotation.BorderLineStyle.Width = 2;
+            
+            // Add shadow for more visibility
+            annotation.Shadow.Visible = true;
+            annotation.Shadow.Color = System.Windows.Media.Colors.Black;
+            
+            // Always show text for selected annotation
+            annotation.Text = $">>> [{index}] <<<\nX: {dataPoint.X:F1}\nY: {dataPoint.Y:F1}";
+            annotation.Anchor.Y = 1;
+        }
+
+        /// <summary>
+        /// Clears visual feedback for selected annotation
+        /// </summary>
+        private void ClearSelectionVisual(int index)
+        {
+            if (index < 0 || index >= annotations.Count || index >= dataPoints.Count) return;
+
+            Annotation3D annotation = annotations[index];
+            SphereDataPoint dataPoint = dataPoints[index];
+            
+            // Reset line width to default
+            annotation.ArrowLineStyle.Width = 1;
+            
+            // Reset text to normal weight
+            annotation.TextStyle.Font = new WpfFont("Segoe UI", 10, false, false);
+            
+            // Restore original color
+            annotation.TextStyle.Color = dataPoint.Color;
+            annotation.ArrowLineStyle.Color = dataPoint.Color;
+            
+            // Remove border and shadow
+            annotation.BorderVisible = false;
+            annotation.Shadow.Visible = false;
+            
+            // Clear text if mouse tracking is enabled and not hovered
+            if (isMouseTrackingEnabled && hoveredAnnotationIndex != index)
             {
                 annotation.Text = string.Empty;
             }
-            hoveredAnnotationIndex = null;
+            else
+            {
+                // Restore normal text format
+                annotation.Text = $"[{index}]\nX: {dataPoint.X:F1}\nY: {dataPoint.Y:F1}";
+            }
         }
     }
 }
