@@ -414,7 +414,7 @@ namespace InteractiveExamples.ViewModels
             mouseTrackAnnotation = chartSetupService.CreateMouseTrackAnnotation(view3D);
 
             dataPointAnnotationService = new DataPointAnnotationService(view3D);
-            dataPointAnnotationService.GenerateDataPoints(5000);
+            dataPointAnnotationService.GenerateDataPoints(50);
             dataPointAnnotationService.SetMouseTrackingEnabled(isMouseTrackingEnabled);
             UpdateAnnotationCountText();
 
@@ -784,7 +784,8 @@ namespace InteractiveExamples.ViewModels
             lastUpdateTime = currentTime;
 
             chart.BeginUpdate();
-            dataPointAnnotationService.UpdateDataPointsClockwise(deltaTimeSeconds);
+            // Pass the chart to enable real-time screen position updates and smooth hover tracking
+            dataPointAnnotationService.UpdateDataPointsClockwise(deltaTimeSeconds, chart);
             chart.EndUpdate();
         }
 
