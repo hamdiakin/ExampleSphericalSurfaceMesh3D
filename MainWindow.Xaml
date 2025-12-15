@@ -1,4 +1,4 @@
-﻿<Window x:Class="InteractiveExamples.ExampleSphericalSurfaceMesh3D"
+<Window x:Class="InteractiveExamples.ExampleSphericalSurfaceMesh3D"
 Title="ExampleSphericalSurfaceMesh3D / NET8 WPF"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -23,6 +23,20 @@ Title="ExampleSphericalSurfaceMesh3D / NET8 WPF"
             <StackPanel Grid.Row="0" Grid.Column="1">
                 <CheckBox Name="checkBoxSphericalGrid" IsChecked="{Binding IsSphericalGridVisible, Mode=TwoWay}" Foreground="White">Spherical grid</CheckBox>
                 <CheckBox Name="checkBoxHeadingGrid" IsChecked="{Binding IsHeadingGridVisible, Mode=TwoWay}" Foreground="White">Heading grid</CheckBox>
+                <Separator Margin="0,8,0,8" Background="Gray"/>
+                <Label Content="Annotations" Foreground="White" FontWeight="Bold" Margin="0,0,0,4"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="Count:" Grid.Column="0" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Grid.Column="1" Height="23" Text="{Binding AnnotationCountText, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" Margin="0,0,4,0"/>
+                    <Button Grid.Column="2" Content="+" Command="{Binding AddAnnotationCommand}" Width="30" Height="23" Margin="0,0,4,0"/>
+                </Grid>
+                <Button Content="Delete Last" Command="{Binding DeleteAnnotationCommand}" Margin="0,4,0,0" Height="25"/>
+                <CheckBox IsChecked="{Binding IsMouseTrackingEnabled, Mode=TwoWay}" Foreground="White" Margin="0,8,0,0" Content="Mouse Track"/>
             </StackPanel>
             <Grid Margin="0,8,0,0" VerticalAlignment="Top" Grid.Row="2">
                 <Grid.RowDefinitions>

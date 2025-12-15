@@ -46,6 +46,8 @@ namespace InteractiveExamples.ViewModels
         private bool bOwnChange = false;
         private PointDoubleXYZ? oldDimensions;
         private PointDoubleXYZ? oldDimensionsLegacy;
+        private string annotationCountText = "50";
+        private bool isMouseTrackingEnabled = true;
 
         #endregion
 
@@ -76,6 +78,9 @@ namespace InteractiveExamples.ViewModels
             mouseTrackingService = new MouseTrackingService();
 
             TopView2DCommand = new RelayCommand(parameter => ExecuteTopView2D());
+            AddAnnotationCommand = new RelayCommand(parameter => ExecuteAddAnnotation(), parameter => CanExecuteAnnotationCommand());
+            DeleteAnnotationCommand = new RelayCommand(parameter => ExecuteDeleteAnnotation(), parameter => CanExecuteAnnotationCommand());
+            ToggleMouseTrackingCommand = new RelayCommand(parameter => ExecuteToggleMouseTracking(), parameter => CanExecuteAnnotationCommand());
         }
 
         #endregion
@@ -326,6 +331,34 @@ namespace InteractiveExamples.ViewModels
         #region Commands
 
         public ICommand TopView2DCommand { get; }
+        public ICommand AddAnnotationCommand { get; }
+        public ICommand DeleteAnnotationCommand { get; }
+        public ICommand ToggleMouseTrackingCommand { get; }
+
+        #endregion
+
+        #region Properties - Annotation Management
+
+        public string AnnotationCountText
+        {
+            get => annotationCountText;
+            set => SetProperty(ref annotationCountText, value);
+        }
+
+        public bool IsMouseTrackingEnabled
+        {
+            get => isMouseTrackingEnabled;
+            set
+            {
+                if (SetProperty(ref isMouseTrackingEnabled, value))
+                {
+                    if (dataPointAnnotationService != null)
+                    {
+                        dataPointAnnotationService.SetMouseTrackingEnabled(value);
+                    }
+                }
+            }
+        }
 
         #endregion
 
@@ -347,6 +380,8 @@ namespace InteractiveExamples.ViewModels
 
             dataPointAnnotationService = new DataPointAnnotationService(view3D);
             dataPointAnnotationService.GenerateDataPoints(50);
+            dataPointAnnotationService.SetMouseTrackingEnabled(isMouseTrackingEnabled);
+            UpdateAnnotationCountText();
 
             chart.MouseMove += ChartMouseMove;
             chartSetupService.HideAxesAndWalls(view3D);
@@ -551,6 +586,44 @@ namespace InteractiveExamples.ViewModels
                 dimensions => ResetDimensions(dimensions));
 
             SetViewPoint();
+        }
+
+        private bool CanExecuteAnnotationCommand()
+        {
+            return dataPointAnnotationService != null && chart != null;
+        }
+
+        private void ExecuteAddAnnotation()
+        {
+            if (dataPointAnnotationService == null || chart == null) return;
+
+            chart.BeginUpdate();
+            dataPointAnnotationService.AddRandomAnnotation();
+            UpdateAnnotationCountText();
+            chart.EndUpdate();
+        }
+
+        private void ExecuteDeleteAnnotation()
+        {
+            if (dataPointAnnotationService == null || chart == null) return;
+
+            chart.BeginUpdate();
+            dataPointAnnotationService.DeleteLastAnnotation();
+            UpdateAnnotationCountText();
+            chart.EndUpdate();
+        }
+
+        private void UpdateAnnotationCountText()
+        {
+            if (dataPointAnnotationService != null)
+            {
+                AnnotationCountText = dataPointAnnotationService.AnnotationCount.ToString();
+            }
+        }
+
+        private void ExecuteToggleMouseTracking()
+        {
+            IsMouseTrackingEnabled = !IsMouseTrackingEnabled;
         }
 
         #endregion

@@ -4,10 +4,7 @@ using LightningChartLib.WPF.Charting.Annotations;
 using LightningChartLib.WPF.Charting.Views.View3D;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
-using System.Windows.Input;
-using System.Windows.Media;
 
 namespace InteractiveExamples.Services
 {
@@ -28,7 +25,10 @@ namespace InteractiveExamples.Services
 
         public IReadOnlyList<Annotation3D> Annotations => annotations.AsReadOnly();
 
+        public int AnnotationCount => annotations.Count;
+
         private int? hoveredAnnotationIndex = null;
+        private bool isMouseTrackingEnabled = true;
 
         public void GenerateDataPoints(int n, Random? random = null)
         {
@@ -116,9 +116,15 @@ namespace InteractiveExamples.Services
                 // Update the annotation position to match the new data point position
                 UpdateAnnotationForDataPoint(i, dataPoint);
                 
-                // If this annotation is currently hovered, update its text with new X, Y values
-                if (hoveredAnnotationIndex == i)
+                // Update text based on mouse tracking state
+                if (!isMouseTrackingEnabled)
                 {
+                    // When mouse tracking is disabled, update all texts
+                    ShowAnnotationText(i);
+                }
+                else if (hoveredAnnotationIndex == i)
+                {
+                    // When mouse tracking is enabled, only update hovered annotation text
                     ShowAnnotationText(i);
                 }
             }
@@ -135,7 +141,11 @@ namespace InteractiveExamples.Services
             Annotation3D annotation = annotations[index];
             
             // Preserve text if this annotation is currently being hovered
-            string preservedText = (hoveredAnnotationIndex == index) ? annotation.Text : null;
+            string? preservedText = null;
+            if (hoveredAnnotationIndex == index)
+            {
+                preservedText = annotation.Text;
+            }
             
             ConfigureAnnotation(annotation, dataPoint);
             
@@ -165,11 +175,13 @@ namespace InteractiveExamples.Services
         private void ConfigureAnnotation(Annotation3D annotation, SphereDataPoint dataPoint)
         {
             annotation.LocationCoordinateSystem = CoordinateSystem.AxisValues;
-            annotation.LocationAxisValues.SetValues(0, 0, 0);
-            annotation.TargetAxisValues.SetValues(dataPoint.X, dataPoint.Y, dataPoint.Z);
+            // Text appears at Location, so set Location to the data point (tip) and Target to center
+            annotation.LocationAxisValues.SetValues(dataPoint.X, dataPoint.Y, dataPoint.Z);
+            annotation.TargetAxisValues.SetValues(0, 0, 0);
             annotation.Style = AnnotationStyle.Arrow;
-            annotation.ArrowStyleBegin = ArrowStyle.Circle;
-            annotation.ArrowStyleEnd = ArrowStyle.Arrow;
+            // Swap arrow styles: circle at center (Target/end), arrow at data point (Location/begin)
+            annotation.ArrowStyleBegin = ArrowStyle.Arrow;
+            annotation.ArrowStyleEnd = ArrowStyle.Circle;
             annotation.AllowUserInteraction = false;
             annotation.ArrowLineStyle.Color = dataPoint.Color;
             annotation.TextStyle.Color = dataPoint.Color;
@@ -181,6 +193,26 @@ namespace InteractiveExamples.Services
         }
 
         /// <summary>
+        /// Sets whether mouse tracking is enabled for showing annotation text
+        /// </summary>
+        /// <param name="enabled">True to enable mouse tracking (show text on hover), false to show all texts</param>
+        public void SetMouseTrackingEnabled(bool enabled)
+        {
+            isMouseTrackingEnabled = enabled;
+            
+            if (enabled)
+            {
+                // Clear all texts when enabling mouse tracking
+                ClearAllAnnotationTexts();
+            }
+            else
+            {
+                // Show all texts when disabling mouse tracking
+                ShowAllAnnotationTexts();
+            }
+        }
+
+        /// <summary>
         /// Handles mouse move to detect proximity to annotations and show/hide X, Y values
         /// </summary>
         /// <param name="chart">The LightningChart instance</param>
@@ -189,6 +221,9 @@ namespace InteractiveExamples.Services
         public void HandleMouseMove(LightningChart chart, Point mousePosition, double proximityThreshold = 50.0)
         {
             if (chart == null || annotations.Count == 0) return;
+
+            // If mouse tracking is disabled, don't process mouse movement
+            if (!isMouseTrackingEnabled) return;
 
             int? nearestIndex = FindNearestAnnotation(chart, mousePosition, proximityThreshold);
 
@@ -274,8 +309,8 @@ namespace InteractiveExamples.Services
             // Update text with current X and Y values
             annotation.Text = $"X: {dataPoint.X:F1}\nY: {dataPoint.Y:F1}";
             
-            // Update text position to be at the top of the line (arrow end)
-            annotation.Anchor.Y = 1; // Top of annotation
+            // Update text position to be at the tip of the arrow (Target end)
+            annotation.Anchor.Y = 1; // End of annotation (arrow tip)
         }
 
         /// <summary>
@@ -299,6 +334,83 @@ namespace InteractiveExamples.Services
                 ClearAnnotationText(hoveredAnnotationIndex.Value);
                 hoveredAnnotationIndex = null;
             }
+        }
+
+        /// <summary>
+        /// Adds a random annotation to the chart
+        /// </summary>
+        /// <param name="random">Optional random number generator</param>
+        public void AddRandomAnnotation(Random? random = null)
+        {
+            random ??= new Random();
+
+            SphereDataPoint dataPoint = SphereDataPoint.GenerateRandom(random);
+            dataPoints.Add(dataPoint);
+
+            Annotation3D annotation = CreateAnnotationForDataPoint(dataPoint);
+            annotations.Add(annotation);
+            view3D.Annotations.Add(annotation);
+        }
+
+        /// <summary>
+        /// Deletes the last annotation from the chart
+        /// </summary>
+        public void DeleteLastAnnotation()
+        {
+            if (annotations.Count == 0) return;
+
+            int lastIndex = annotations.Count - 1;
+
+            // Clear hover state if the last annotation is hovered
+            if (hoveredAnnotationIndex == lastIndex)
+            {
+                ClearAnnotationText(lastIndex);
+                hoveredAnnotationIndex = null;
+            }
+            else if (hoveredAnnotationIndex > lastIndex)
+            {
+                hoveredAnnotationIndex = null;
+            }
+
+            Annotation3D annotation = annotations[lastIndex];
+            view3D.Annotations.Remove(annotation);
+            annotations.RemoveAt(lastIndex);
+            dataPoints.RemoveAt(lastIndex);
+        }
+
+        /// <summary>
+        /// Deletes all annotations from the chart
+        /// </summary>
+        public void DeleteAllAnnotations()
+        {
+            ClearExistingData();
+            hoveredAnnotationIndex = null;
+        }
+
+        /// <summary>
+        /// Shows text on all annotations
+        /// </summary>
+        private void ShowAllAnnotationTexts()
+        {
+            for (int i = 0; i < annotations.Count && i < dataPoints.Count; i++)
+            {
+                Annotation3D annotation = annotations[i];
+                SphereDataPoint dataPoint = dataPoints[i];
+                annotation.Text = $"X: {dataPoint.X:F1}\nY: {dataPoint.Y:F1}";
+                annotation.Anchor.Y = 1;
+            }
+        }
+
+        /// <summary>
+        /// Clears text on all annotations
+        /// </summary>
+        private void ClearAllAnnotationTexts()
+        {
+            foreach (var annotation in annotations)
+            {
+                annotation.Text = string.Empty;
+            }
+            hoveredAnnotationIndex = null;
         }
     }
 }
