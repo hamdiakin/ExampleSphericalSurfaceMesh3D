@@ -86,8 +86,8 @@ namespace InteractiveExamples.Models
 
             X = radius * Math.Cos(elevationRad) * Math.Cos(azimuthRad);
             Y = radius * Math.Cos(elevationRad) * Math.Sin(azimuthRad);
-            //Z = radius * Math.Sin(elevationRad);
-            Z = 0;
+            Z = radius * Math.Sin(elevationRad);
+            //Z = 0;
         }
 
         public void MoveClockwise(double angularDistance)
