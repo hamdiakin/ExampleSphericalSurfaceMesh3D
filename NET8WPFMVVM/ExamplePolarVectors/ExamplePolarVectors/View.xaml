@@ -19,7 +19,7 @@
         <lcusb:LightningChart 
 			ActiveView="ViewPolar" 
 			ChartName="Polar Vector Chart"
-            x:Name="_chart">
+            x:Name="chart">
             <lcusb:LightningChart.ViewPolar>
                 <lcusb:ViewPolar Axes="{Binding axes}" Annotations="{Binding annotation}">
                     <lcusb:ViewPolar.LegendBox>

@@ -28,13 +28,13 @@ namespace ExamplePolarVectors
             int vectorCount = 1 + iHistoryCount;
 
             Color oldArrowColor = Colors.DarkGray;
-            Color color = Colors.Black; // Default color
+            Color color = Colors.Black;
             var mainWindow = Application.Current?.MainWindow as View;
-            if (mainWindow?._chart?.ViewPolar != null)
+            if (mainWindow?.chart?.ViewPolar != null)
             {
-                color = mainWindow._chart.ViewPolar.GraphBackground.Color;
+                color = mainWindow.chart.ViewPolar.GraphBackground.Color;
             }
-            else if (mainWindow?._chart?.ViewPolar == null || Axes == null || Axes.Count == 0)
+            else if (mainWindow?.chart?.ViewPolar == null || Axes == null || Axes.Count == 0)
             {
                 return annotList;
             }
@@ -42,15 +42,13 @@ namespace ExamplePolarVectors
 
             for (int iVector = 0; iVector < vectorCount; iVector++)
             {
-                AnnotationPolar vector = new AnnotationPolar(mainWindow._chart.ViewPolar, Axes[0]);
+                AnnotationPolar vector = new AnnotationPolar(mainWindow.chart.ViewPolar, Axes[0]);
                 vector.Style = AnnotationStyle.Arrow;
                 vector.TextStyle.Visible = false;
 
-                //Location is where the vector starts from
                 vector.LocationCoordinateSystem = CoordinateSystem.AxisValues;
                 vector.LocationAxisValues.Angle = 0;
                 vector.LocationAxisValues.Amplitude = 0;
-                //Target is where the vector points to. All vectors are equal length in this example. 
                 vector.TargetAxisValues.Amplitude = MaxAmplitude;
                 vector.ArrowLineStyle.Width = 3;
                 vector.AllowUserInteraction = false;
@@ -58,7 +56,6 @@ namespace ExamplePolarVectors
                 vector.ArrowLineStyle.Color = ChartTools.CalcGradient(transparentToDark, oldArrowColor,
                     (double)iVector / (double)(vectorCount - 1) * 100.0);
 
-                //Use thicker line for newest vector
                 if (iVector == vectorCount - 1)
                 {
                     vector.ArrowLineStyle.Width = 6;

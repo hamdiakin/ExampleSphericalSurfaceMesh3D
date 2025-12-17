@@ -14,28 +14,26 @@ namespace ExamplePolarVectors
 {
     public class ViewModel : DependencyObject
     {
-        private DispatcherTimer _timer = null;
-        private DelegateCommand m_startCommand = null;
-        private DelegateCommand m_stopCommand = null;
+        private DispatcherTimer timer = null;
+        private DelegateCommand mStartCommand = null;
+        private DelegateCommand mStopCommand = null;
         
-        // Shared core components
-        private readonly IDataSetProvider _dataProvider;
-        private readonly IAnnotationFactory _annotationFactory;
-        private PolarChartRenderer _chartRenderer;
-        private ProcessedDataSet _currentDataSet;
+        private readonly IDataSetProvider dataProvider;
+        private readonly IAnnotationFactory annotationFactory;
+        private PolarChartRenderer chartRenderer;
+        private ProcessedDataSet currentDataSet;
         
-        // State tracking
-        private int? _selectedIndex = null;
-        private int? _hoveredIndex = null;
-        private bool _isMouseTrackingEnabled = true;
-        private DateTime _lastUpdateTime;
+        private int? selectedIndex = null;
+        private int? hoveredIndex = null;
+        private bool isMouseTrackingEnabledField = true;
+        private DateTime lastUpdateTime;
 
         #region Dependency Properties
         
-        public ICommand StartCommand => m_startCommand;
-        public ICommand StopCommand => m_stopCommand;
+        public ICommand StartCommand => mStartCommand;
+        public ICommand StopCommand => mStopCommand;
         
-        internal bool IsRunning => _timer?.IsEnabled ?? false;
+        internal bool IsRunning => timer?.IsEnabled ?? false;
         
         public static readonly DependencyProperty AxesProperty =
             DependencyProperty.Register(
@@ -133,7 +131,7 @@ namespace ExamplePolarVectors
             set 
             { 
                 SetValue(IsMouseTrackingEnabledProperty, value);
-                _isMouseTrackingEnabled = value;
+                isMouseTrackingEnabledField = value;
                 RefreshAnnotations();
             }
         }
@@ -142,7 +140,7 @@ namespace ExamplePolarVectors
 
         #region Properties
         
-        private Model _model;
+        private Model model;
         
         #endregion
 
@@ -150,35 +148,33 @@ namespace ExamplePolarVectors
         
         public ViewModel()
         {
-            // Initialize shared core components
-            _dataProvider = new SphereDataSetProvider();
-            _annotationFactory = new SphereAnnotationFactory();
+            dataProvider = new SphereDataSetProvider();
+            annotationFactory = new SphereAnnotationFactory();
             
-            m_startCommand = new DelegateCommand(StartMethod);
-            m_stopCommand = new DelegateCommand(StopMethod);
+            mStartCommand = new DelegateCommand(StartMethod);
+            mStopCommand = new DelegateCommand(StopMethod);
 
-            _model = new Model();
+            model = new Model();
 
             axes = new AxisPolarCollection();
-            axes.Add(_model.GetAxisPolar());
+            axes.Add(model.GetAxisPolar());
 
             annotation = new AnnotationPolarCollection();
 
-            _timer = new DispatcherTimer();
-            _timer.Interval = TimeSpan.FromMilliseconds(textBoxInterval);
-            _timer.Tick += new EventHandler(_dispatcherTimer_Tick);
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromMilliseconds(textBoxInterval);
+            timer.Tick += new EventHandler(DispatcherTimerTick);
             
-            // Subscribe to window loaded event safely
             var mainWindow = Application.Current?.MainWindow as View;
             if (mainWindow != null)
             {
                 if (mainWindow.IsLoaded)
                 {
-                    ViewModel_Loaded(mainWindow, null);
+                    ViewModelLoaded(mainWindow, null);
                 }
                 else
                 {
-                    mainWindow.Loaded += ViewModel_Loaded;
+                    mainWindow.Loaded += ViewModelLoaded;
                 }
             }
             else
@@ -191,11 +187,11 @@ namespace ExamplePolarVectors
                     {
                         if (window.IsLoaded)
                         {
-                            ViewModel_Loaded(window, null);
+                            ViewModelLoaded(window, null);
                         }
                         else
                         {
-                            window.Loaded += ViewModel_Loaded;
+                            window.Loaded += ViewModelLoaded;
                         }
                     }
                 }), System.Windows.Threading.DispatcherPriority.Loaded);
@@ -210,7 +206,7 @@ namespace ExamplePolarVectors
         {
             if (IsRunning)
             {
-                _timer.Stop();
+                timer.Stop();
                 stop = false;
                 start = true;
             }
@@ -231,22 +227,18 @@ namespace ExamplePolarVectors
                         return;
                     }
 
-                    // Initialize chart renderer
                     var mainWindow = Application.Current?.MainWindow as View;
-                    if (mainWindow?._chart?.ViewPolar != null)
+                    if (mainWindow?.chart?.ViewPolar != null)
                     {
-                        _chartRenderer = new PolarChartRenderer(mainWindow._chart.ViewPolar, annotation);
+                        chartRenderer = new PolarChartRenderer(mainWindow.chart.ViewPolar, annotation);
                         
-                        // Generate dataset using shared provider
-                        _currentDataSet = _dataProvider.GenerateDataSet(count);
-                        _lastUpdateTime = DateTime.Now;
+                        currentDataSet = dataProvider.GenerateDataSet(count);
+                        lastUpdateTime = DateTime.Now;
                         
-                        // Create and render initial annotations
                         RefreshAnnotations();
                         
-                        // Start the timer
-                        _timer.Interval = TimeSpan.FromMilliseconds(interval);
-                        _timer.Start();
+                        timer.Interval = TimeSpan.FromMilliseconds(interval);
+                        timer.Start();
                         
                         // Enable/disable buttons
                         stop = true;
@@ -278,28 +270,26 @@ namespace ExamplePolarVectors
 
         #region Animation Updates
         
-        private void _dispatcherTimer_Tick(object sender, EventArgs e)
+        private void DispatcherTimerTick(object sender, EventArgs e)
         {
             UpdateDataPoints();
         }
 
         private void UpdateDataPoints()
         {
-            if (_currentDataSet == null || _chartRenderer == null)
+            if (currentDataSet == null || chartRenderer == null)
                 return;
 
             DateTime currentTime = DateTime.Now;
-            double deltaTimeSeconds = (currentTime - _lastUpdateTime).TotalSeconds;
-            _lastUpdateTime = currentTime;
+            double deltaTimeSeconds = (currentTime - lastUpdateTime).TotalSeconds;
+            lastUpdateTime = currentTime;
 
-            // Update all data points (rotate clockwise based on individual pace)
-            foreach (var point in _currentDataSet.DataPoints)
+            foreach (var point in currentDataSet.DataPoints)
             {
                 double angularDistance = point.Pace * deltaTimeSeconds;
                 point.MoveClockwise(angularDistance);
             }
 
-            // Refresh annotations with updated positions
             RefreshAnnotations();
         }
         
@@ -309,19 +299,17 @@ namespace ExamplePolarVectors
         
         private void RefreshAnnotations()
         {
-            if (_currentDataSet == null || _chartRenderer == null)
+            if (currentDataSet == null || chartRenderer == null)
                 return;
 
-            // Create annotation specs using shared factory
-            var annotationSpecs = _annotationFactory.CreateAnnotations(
-                _currentDataSet,
-                _selectedIndex,
-                _hoveredIndex,
-                !_isMouseTrackingEnabled
+            var annotationSpecs = annotationFactory.CreateAnnotations(
+                currentDataSet,
+                selectedIndex,
+                hoveredIndex,
+                !isMouseTrackingEnabledField
             );
 
-            // Render annotations using polar chart renderer
-            _chartRenderer.RenderAnnotations(annotationSpecs, _currentDataSet);
+            chartRenderer.RenderAnnotations(annotationSpecs, currentDataSet);
         }
         
         #endregion
@@ -330,36 +318,26 @@ namespace ExamplePolarVectors
         
         public void HandleMouseMove(Point mousePosition, double chartWidth, double chartHeight)
         {
-            if (!_isMouseTrackingEnabled || _currentDataSet == null || _chartRenderer == null)
+            if (!isMouseTrackingEnabledField || currentDataSet == null || chartRenderer == null)
                 return;
 
-            // Convert screen coordinates to polar coordinates (simplified)
-            // This would need more sophisticated conversion based on chart's actual coordinate system
-            // For now, we'll use a basic proximity check
-            
             var mainWindow = Application.Current?.MainWindow as View;
-            if (mainWindow?._chart?.ViewPolar != null)
+            if (mainWindow?.chart?.ViewPolar != null)
             {
-                // Find nearest annotation
-                // Note: Actual implementation would need proper coordinate conversion
-                // This is a placeholder for the interaction system
             }
         }
 
         public void HandleMouseClick(Point mousePosition)
         {
-            if (_currentDataSet == null || _chartRenderer == null)
+            if (currentDataSet == null || chartRenderer == null)
                 return;
-
-            // Similar to HandleMouseMove, would need proper coordinate conversion
-            // to determine which annotation was clicked
         }
         
         #endregion
 
         #region Event Handlers
         
-        private void ViewModel_Loaded(object sender, RoutedEventArgs e)
+        private void ViewModelLoaded(object sender, RoutedEventArgs e)
         {
             if (annotation == null)
             {
@@ -370,8 +348,7 @@ namespace ExamplePolarVectors
                 annotation.Clear();
             }
             
-            // Initialize with sample annotations from the model
-            annotation.AddRange(_model.GetAnnotation(axes));
+            annotation.AddRange(model.GetAnnotation(axes));
         }
         
         #endregion
