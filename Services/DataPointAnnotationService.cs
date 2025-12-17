@@ -6,6 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
+using ExampleShared.Core.Providers;
+using ExampleShared.Core.Annotations;
+using ExampleShared.Core.Domain;
 
 namespace InteractiveExamples.Services
 {
@@ -24,6 +27,8 @@ namespace InteractiveExamples.Services
         private readonly View3D view3D;
         private readonly List<SphereDataPoint> dataPoints;
         private readonly List<Annotation3D> annotations;
+        private readonly IDataSetProvider dataSetProvider;
+        private readonly IAnnotationFactory annotationFactory;
         
         // Performance optimization: StringBuilder pool to reduce string allocations
         private readonly StringBuilder stringBuilder = new StringBuilder(64);
@@ -56,8 +61,15 @@ namespace InteractiveExamples.Services
         #region Constructor
 
         public DataPointAnnotationService(View3D view3D)
+            : this(view3D, new SphereDataSetProvider(), new SphereAnnotationFactory())
+        {
+        }
+
+        public DataPointAnnotationService(View3D view3D, IDataSetProvider dataSetProvider, IAnnotationFactory annotationFactory)
         {
             this.view3D = view3D ?? throw new ArgumentNullException(nameof(view3D));
+            this.dataSetProvider = dataSetProvider ?? throw new ArgumentNullException(nameof(dataSetProvider));
+            this.annotationFactory = annotationFactory ?? throw new ArgumentNullException(nameof(annotationFactory));
             this.dataPoints = new List<SphereDataPoint>();
             this.annotations = new List<Annotation3D>();
         }
@@ -121,32 +133,51 @@ namespace InteractiveExamples.Services
             if (n < 0)
                 throw new ArgumentException("Number of data points must be non-negative.", nameof(n));
 
-            random ??= new Random();
-
             ClearExistingData();
+
+            // Use shared provider to generate dataset
+            int? seed = random != null ? random.Next() : null;
+            var dataSet = dataSetProvider.GenerateDataSet(n, seed);
 
             // Pre-allocate capacity to avoid resizing
             dataPoints.Capacity = Math.Max(dataPoints.Capacity, n);
             annotations.Capacity = Math.Max(annotations.Capacity, n);
 
-            // Create all annotations first (without adding to chart)
-            var newAnnotations = new Annotation3D[n];
-            for (int i = 0; i < n; i++)
+            // Add data points to internal list
+            foreach (var point in dataSet.DataPoints)
             {
-                SphereDataPoint dataPoint = SphereDataPoint.GenerateRandom(random);
-                dataPoints.Add(dataPoint);
+                dataPoints.Add(point);
+            }
 
-                Annotation3D annotation = CreateAnnotationForDataPoint(dataPoint);
-                annotations.Add(annotation);
-                newAnnotations[i] = annotation;
+            // Create annotation specs using shared factory
+            var annotationSpecs = annotationFactory.CreateAnnotations(
+                dataSet, 
+                selectedAnnotationIndex, 
+                hoveredAnnotationIndex, 
+                !isMouseTrackingEnabled);
+
+            // Create all annotations first (without adding to chart)
+            var newAnnotations = new Annotation3D[annotationSpecs.Count];
+            for (int i = 0; i < annotationSpecs.Count; i++)
+            {
+                var spec = annotationSpecs[i] as ArrowAnnotationSpec;
+                if (spec != null)
+                {
+                    Annotation3D annotation = CreateAnnotationFromSpec(spec);
+                    annotations.Add(annotation);
+                    newAnnotations[i] = annotation;
+                }
             }
 
             // Add all annotations to chart (LightningChart doesn't have AddRange, but 
             // adding them all after BeginUpdate minimizes redraws)
             foreach (var annotation in newAnnotations)
             {
-                view3D.Annotations.Add(annotation);
-                cachedScreenPositions.Add((0, 0)); // Placeholder, will be updated on next frame
+                if (annotation != null)
+                {
+                    view3D.Annotations.Add(annotation);
+                    cachedScreenPositions.Add((0, 0)); // Placeholder, will be updated on next frame
+                }
             }
         }
 
@@ -421,6 +452,54 @@ namespace InteractiveExamples.Services
             };
 
             ConfigureAnnotation(annotation, dataPoint);
+
+            return annotation;
+        }
+
+        private Annotation3D CreateAnnotationFromSpec(ArrowAnnotationSpec spec)
+        {
+            Annotation3D annotation = new Annotation3D(
+                view3D,
+                Axis3DBinding.Primary,
+                Axis3DBinding.Primary,
+                Axis3DBinding.Primary)
+            {
+                TargetCoordinateSystem = AnnotationTargetCoordinates.AxisValues
+            };
+
+            // Configure from spec
+            annotation.LocationCoordinateSystem = CoordinateSystem.AxisValues;
+            annotation.LocationAxisValues.SetValues(spec.StartX, spec.StartY, spec.StartZ);
+            annotation.TargetAxisValues.SetValues(spec.EndX, spec.EndY, spec.EndZ);
+            annotation.Style = AnnotationStyle.Arrow;
+            annotation.ArrowStyleBegin = ArrowStyle.Arrow;
+            annotation.ArrowStyleEnd = ArrowStyle.Circle;
+            annotation.AllowUserInteraction = false;
+            annotation.ArrowLineStyle.Color = spec.Color;
+            annotation.TextStyle.Color = spec.Color;
+            annotation.Visible = true;
+            annotation.Anchor.Y = 1;
+            annotation.Fill.Style = RectFillStyle.None;
+            annotation.BorderVisible = false;
+            annotation.Shadow.Visible = false;
+
+            // Apply label if present
+            if (!string.IsNullOrEmpty(spec.Label))
+            {
+                annotation.Text = spec.Label;
+            }
+
+            // Apply selection/hover visual feedback
+            if (spec.IsSelected)
+            {
+                annotation.ArrowLineStyle.Width = 4;
+                annotation.TextStyle.Font = new WpfFont("Segoe UI", 14, true, false);
+                annotation.BorderVisible = true;
+                annotation.BorderLineStyle.Color = System.Windows.Media.Colors.Yellow;
+                annotation.BorderLineStyle.Width = 2;
+                annotation.Shadow.Visible = true;
+                annotation.Shadow.Color = System.Windows.Media.Colors.Black;
+            }
 
             return annotation;
         }

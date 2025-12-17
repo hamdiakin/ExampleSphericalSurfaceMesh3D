@@ -5,6 +5,8 @@ VisualStudioVersion = 17.10.35931.201
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExampleSphericalSurfaceMesh3D", "ExampleSphericalSurfaceMesh3D.csproj", "{24E90019-3556-44E9-83E2-D34D764884C4}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExamplePolarVectors", "NET8WPFMVVM\ExamplePolarVectors\ExamplePolarVectors\ExamplePolarVectors.csproj", "{3B330A99-503E-4F67-9957-8B0E9D7BF061}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{24E90019-3556-44E9-83E2-D34D764884C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24E90019-3556-44E9-83E2-D34D764884C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24E90019-3556-44E9-83E2-D34D764884C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B330A99-503E-4F67-9957-8B0E9D7BF061}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B330A99-503E-4F67-9957-8B0E9D7BF061}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B330A99-503E-4F67-9957-8B0E9D7BF061}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B330A99-503E-4F67-9957-8B0E9D7BF061}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

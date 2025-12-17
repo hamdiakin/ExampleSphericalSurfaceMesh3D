@@ -15,6 +15,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <EnableDefaultItems>true</EnableDefaultItems>
+    <DefaultItemExcludes>$(DefaultItemExcludes);NET8WPFMVVM\**;ExampleShared.Core\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -32,7 +33,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-
+    <ProjectReference Include="ExampleShared.Core\ExampleShared.Core.csproj" />
   </ItemGroup>
   
   <ItemGroup>

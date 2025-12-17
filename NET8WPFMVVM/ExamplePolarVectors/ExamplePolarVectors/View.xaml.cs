@@ -23,6 +23,10 @@ namespace ExamplePolarVectors
         {
             InitializeComponent();
             this.Loaded += View_Loaded;
+            
+            // Add mouse event handlers for interaction
+            _chart.MouseMove += Chart_MouseMove;
+            _chart.MouseLeftButtonDown += Chart_MouseLeftButtonDown;
         }
 
         private void View_Loaded(object sender, RoutedEventArgs e)
@@ -38,6 +42,24 @@ namespace ExamplePolarVectors
             // - Systems with limited DirectX support
             //
             // The chart functionality is not affected - it's just using a different rendering path.
+        }
+
+        private void Chart_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (DataContext is ViewModel viewModel)
+            {
+                Point mousePosition = e.GetPosition(_chart);
+                viewModel.HandleMouseMove(mousePosition, _chart.ActualWidth, _chart.ActualHeight);
+            }
+        }
+
+        private void Chart_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (DataContext is ViewModel viewModel)
+            {
+                Point mousePosition = e.GetPosition(_chart);
+                viewModel.HandleMouseClick(mousePosition);
+            }
         }
     }
 }

@@ -28,18 +28,30 @@
                 </lcusb:ViewPolar>
             </lcusb:LightningChart.ViewPolar>
         </lcusb:LightningChart>
-        <StackPanel Grid.Column="1" Margin="8">
-            <Label>Old vector count</Label>
-            <TextBox Name="textBoxHistory" Text="{Binding textBoxHistoryCount,Mode=TwoWay}"></TextBox>
+        <StackPanel Grid.Column="1" Margin="8" MinWidth="150">
+            <Label>Annotation Count</Label>
+            <TextBox Name="textBoxAnnotationCount" Text="{Binding annotationCount,Mode=TwoWay}"/>
             <Grid Height="8"/>
-            <Label>Update interval (ms)</Label>
-            <TextBox Name="textBoxInterval" Text="{Binding textBoxInterval,Mode=TwoWay}"></TextBox>
+            
+            <Label>Update Interval (ms)</Label>
+            <TextBox Name="textBoxInterval" Text="{Binding textBoxInterval,Mode=TwoWay}"/>
             <Grid Height="8"/>
+            
+            <CheckBox Name="checkBoxMouseTracking" IsChecked="{Binding isMouseTrackingEnabled,Mode=TwoWay}" 
+                      Content="Mouse Tracking" Margin="0,0,0,8"/>
+            
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Width="75" Command="{Binding StartCommand}" IsEnabled="{Binding start,Mode=TwoWay}" Name="buttonStart">Start</Button>
                 <Grid Width="8"/>
                 <Button Width="75" Command="{Binding StopCommand}" IsEnabled="{Binding stop,Mode=TwoWay}" Name="buttonStop">Stop</Button>
             </StackPanel>
+            
+            <Grid Height="16"/>
+            <TextBlock Text="Info:" FontWeight="Bold" Margin="0,0,0,4"/>
+            <TextBlock TextWrapping="Wrap" FontSize="10">
+                This demo shows the same dataset as the 3D spherical surface demo, rendered on a polar chart. 
+                Annotations rotate clockwise at individual paces.
+            </TextBlock>
         </StackPanel>
     </Grid>
 </Window>
