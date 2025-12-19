@@ -11,3 +11,4 @@ namespace ExampleShared.Core.Domain
     }
 }
 
+
