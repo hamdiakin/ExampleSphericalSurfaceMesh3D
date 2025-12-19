@@ -1,0 +1,61 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)..\..\bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)..\..\obj\</BaseIntermediateOutputPath>
+    <OutputPath>$(BaseOutputPath)$(MSBuildProjectName)\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(MSBuildProjectName)\$(Configuration)\</IntermediateOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+<TargetFramework>net8.0-windows7.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <Configurations>Debug;Release</Configurations>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Copyright>Copyright 2009-2025</Copyright>
+    <Company>LightningChart Ltd</Company>
+  </PropertyGroup>
+  <PropertyGroup>
+    <EnableDefaultItems>true</EnableDefaultItems>
+    <DefaultItemExcludes>$(DefaultItemExcludes)</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyName></AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants)</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>$(DefineConstants)</DefineConstants>
+    <Optimize>True</Optimize>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ExampleShared.Core\Common.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="8.0.8" />
+    <Reference Include="LightningChart.DirectX">
+      <HintPath>$(programfiles)\LightningChart\LightningChart .NET SDK v.12\LibNET\LightningChart.DirectX.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="LightningChart.WPF.Charting.NET8">
+      <HintPath>$(programfiles)\LightningChart\LightningChart .NET SDK v.12\LibNET\LightningChart.WPF.Charting.NET8.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="LightningChart.WPF.Signaltools.NET8">
+      <HintPath>$(programfiles)\LightningChart\LightningChart .NET SDK v.12\LibNET\LightningChart.WPF.Signaltools.NET8.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
