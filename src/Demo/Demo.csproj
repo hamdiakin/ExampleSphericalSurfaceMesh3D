@@ -21,7 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SurfaceChartPoC\SurfaceChartPoC.csproj" />
     <ProjectReference Include="..\PolarChartPoC\PolarChartPoC.csproj" />
-    <ProjectReference Include="..\ExampleShared.Core\Common.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
   
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <BaseOutputPath>$(MSBuildThisFileDirectory)..\..\bin\</BaseOutputPath>
@@ -41,7 +41,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ExampleShared.Core\Common.csproj" />
+    <ProjectReference Include="..\\Common\\Common.csproj" />
   </ItemGroup>
   
   <ItemGroup>

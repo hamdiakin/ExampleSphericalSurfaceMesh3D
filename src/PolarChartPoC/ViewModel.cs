@@ -1,4 +1,4 @@
-﻿using LightningChartLib.WPF.ChartingMVVM;
+using LightningChartLib.WPF.ChartingMVVM;
 using LightningChartLib.WPF.ChartingMVVM.Annotations;
 using LightningChartLib.WPF.ChartingMVVM.Views.ViewPolar;
 using System;
@@ -8,6 +8,7 @@ using System.Windows.Threading;
 using Common.Providers;
 using Common.Annotations;
 using Common.Domain;
+using Common.Commands;
 using PolarChartPoC.Adapters;
 
 namespace PolarChartPoC
@@ -15,8 +16,8 @@ namespace PolarChartPoC
     public class ViewModel : DependencyObject
     {
         private DispatcherTimer timer = null;
-        private DelegateCommand mStartCommand = null;
-        private DelegateCommand mStopCommand = null;
+        private RelayCommand mStartCommand = null;
+        private RelayCommand mStopCommand = null;
         
         private readonly IDataSetProvider dataProvider;
         private readonly IAnnotationFactory annotationFactory;
@@ -151,8 +152,8 @@ namespace PolarChartPoC
             dataProvider = new SphereDataSetProvider();
             annotationFactory = new SphereAnnotationFactory();
             
-            mStartCommand = new DelegateCommand(StartMethod);
-            mStopCommand = new DelegateCommand(StopMethod);
+            mStartCommand = new RelayCommand(StartMethod);
+            mStopCommand = new RelayCommand(StopMethod);
 
             model = new Model();
 

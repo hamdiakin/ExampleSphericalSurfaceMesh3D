@@ -1,4 +1,4 @@
-using SurfaceChartPoC.Commands;
+using Common.Commands;
 using SurfaceChartPoC.Services;
 using LightningChartLib.WPF.Charting;
 using LightningChartLib.WPF.Charting.Annotations;

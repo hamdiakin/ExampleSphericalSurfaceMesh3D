@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35931.201
@@ -9,9 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SurfaceChartPoC", "src\Surf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PolarChartPoC", "src\PolarChartPoC\PolarChartPoC.csproj", "{E238A0D1-B219-4996-ADCE-331C184C077C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ExampleShared.Core", "ExampleShared.Core", "{28DBDBBB-C8AA-FF29-16D6-46F5FA6BF4C5}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{28DBDBBB-C8AA-FF29-16D6-46F5FA6BF4C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "src\ExampleShared.Core\Common.csproj", "{5DE9A8C0-6FB3-42F0-8FE8-6987C4E3AC82}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "src\Common\Common.csproj", "{5DE9A8C0-6FB3-42F0-8FE8-6987C4E3AC82}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo", "src\Demo\Demo.csproj", "{2F75FCA6-8B11-48EC-832D-D0C14945E757}"
 EndProject
