@@ -1,14 +1,17 @@
+using System.Collections.Generic;
+using System.Windows.Media;
 using LightningChartLib.WPF.ChartingMVVM;
 using LightningChartLib.WPF.ChartingMVVM.Annotations;
 using LightningChartLib.WPF.ChartingMVVM.Axes;
 using LightningChartLib.WPF.ChartingMVVM.Views.ViewPolar;
-using System.Collections.Generic;
-using System.Windows;
-using System.Windows.Media;
 
-namespace PolarChartPoC
+namespace PolarChartLib.Models
 {
-    public class Model
+    /// <summary>
+    /// Configures the polar axis and history trail annotations for the polar chart.
+    /// Adapted from the original PoC Model but independent of Application.Current.MainWindow.
+    /// </summary>
+    internal class PolarChartModel
     {
         public double MaxAmplitude = 100.0;
 
@@ -21,25 +24,25 @@ namespace PolarChartPoC
             axis.AllowScaling = false;
             return axis;
         }
-        public List<AnnotationPolar> GetAnnotation(AxisPolarCollection Axes)
+
+        public List<AnnotationPolar> GetAnnotation(AxisPolarCollection axes, ViewPolar viewPolar)
         {
-            List<AnnotationPolar> annotList = new List<AnnotationPolar>();
-            int iHistoryCount = 20;
-            int vectorCount = 1 + iHistoryCount;
+            var annotList = new List<AnnotationPolar>();
+            int historyCount = 20;
+            int vectorCount = 1 + historyCount;
+
+            if (viewPolar == null || axes == null || axes.Count == 0)
+            {
+                return annotList;
+            }
 
             Color oldArrowColor = Colors.DarkGray;
-            Color color = Colors.Black;
-
-            if (Axes == null || Axes.Count == 0)
-                return annotList;
+            Color color = viewPolar.GraphBackground.Color;
             Color transparentToDark = Color.FromArgb(0, color.R, color.G, color.B);
 
             for (int iVector = 0; iVector < vectorCount; iVector++)
             {
-                // Legacy PoC implementation depended on the window's chart instance.
-                // For the thin-shell PoC that now hosts PolarChartLib, create annotations
-                // against the first axis only.
-                AnnotationPolar vector = new AnnotationPolar(null, Axes[0]);
+                AnnotationPolar vector = new AnnotationPolar(viewPolar, axes[0]);
                 vector.Style = AnnotationStyle.Arrow;
                 vector.TextStyle.Visible = false;
 
@@ -61,7 +64,9 @@ namespace PolarChartPoC
 
                 annotList.Add(vector);
             }
+
             return annotList;
         }
     }
 }
+

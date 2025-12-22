@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:lcusb="http://schemas.lightningchart.com/chartingMVVM/"
         xmlns:local="clr-namespace:Demo"
+        xmlns:surface="clr-namespace:SurfaceChartLib.Views;assembly=SurfaceChartLib"
+        xmlns:polar="clr-namespace:PolarChartLib.Views;assembly=PolarChartLib"
         mc:Ignorable="d" 
         Title="Demo - Combined Charts" Height="600" Width="1200" Background="#202020">
     <Grid>
@@ -33,7 +34,7 @@
             
             <!-- Left: Surface Chart (3D) -->
             <Grid Grid.Column="0" Name="gridSurfaceChart" Background="#1A1A1A">
-                <Grid Name="gridSurfaceChartContainer"/>
+                <surface:SurfaceChartView />
             </Grid>
             
             <!-- Divider -->
@@ -41,20 +42,7 @@
             
             <!-- Right: Polar Chart -->
             <Grid Grid.Column="2" Name="gridPolarChart" Background="#1A1A1A">
-                <lcusb:LightningChart 
-                    ActiveView="ViewPolar" 
-                    ChartName="Polar Vector Chart"
-                    x:Name="polarChart"
-                    MouseLeftButtonDown="PolarChart_MouseLeftButtonDown"
-                    KeyDown="PolarChart_KeyDown">
-                    <lcusb:LightningChart.ViewPolar>
-                        <lcusb:ViewPolar>
-                            <lcusb:ViewPolar.LegendBox>
-                                <lcusb:LegendBoxPolar Visible="False"/>
-                            </lcusb:ViewPolar.LegendBox>                    
-                        </lcusb:ViewPolar>
-                    </lcusb:LightningChart.ViewPolar>
-                </lcusb:LightningChart>
+                <polar:PolarChartView />
             </Grid>
         </Grid>
     </Grid>

@@ -1,19 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <BaseOutputPath>$(MSBuildThisFileDirectory)..\..\bin\</BaseOutputPath>
     <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)..\..\obj\</BaseIntermediateOutputPath>
     <OutputPath>$(BaseOutputPath)$(MSBuildProjectName)\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(MSBuildProjectName)\$(Configuration)\</IntermediateOutputPath>
   </PropertyGroup>
+
   <PropertyGroup>
-<TargetFramework>net8.0-windows7.0</TargetFramework>
-    <OutputType>WinExe</OutputType>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
     <UseWPF>true</UseWPF>
-    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
-    <NoWarn>CA1416</NoWarn>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
+
   <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="8.0.8" />
     <Reference Include="LightningChart.DirectX">
         <HintPath>$(ProgramW6432)\LightningChart\LightningChart .NET SDK v.12\LibNET\LightningChart.DirectX.dll</HintPath>
         <Private>True</Private>
@@ -23,13 +28,5 @@
         <Private>True</Private>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
-    <PackageReference Include="System.Drawing.Common" Version="8.0.8" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\\Common\\Common.csproj" />
-    <ProjectReference Include="..\PolarChartLib\PolarChartLib.csproj" />
-  </ItemGroup>
+
 </Project>

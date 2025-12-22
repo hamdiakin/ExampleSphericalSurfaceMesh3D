@@ -8,7 +8,6 @@ using System.Windows.Threading;
 using Common.Providers;
 using Common.Annotations;
 using Common.Domain;
-using Common.Commands;
 using PolarChartPoC.Adapters;
 
 namespace PolarChartPoC
@@ -16,8 +15,8 @@ namespace PolarChartPoC
     public class ViewModel : DependencyObject
     {
         private DispatcherTimer timer = null;
-        private RelayCommand mStartCommand = null;
-        private RelayCommand mStopCommand = null;
+        private DelegateCommand mStartCommand = null;
+        private DelegateCommand mStopCommand = null;
         
         private readonly IDataSetProvider dataProvider;
         private readonly IAnnotationFactory annotationFactory;
@@ -152,8 +151,8 @@ namespace PolarChartPoC
             dataProvider = new SphereDataSetProvider();
             annotationFactory = new SphereAnnotationFactory();
             
-            mStartCommand = new RelayCommand(StartMethod);
-            mStopCommand = new RelayCommand(StopMethod);
+            mStartCommand = new DelegateCommand(StartMethod);
+            mStopCommand = new DelegateCommand(StopMethod);
 
             model = new Model();
 
@@ -228,27 +227,9 @@ namespace PolarChartPoC
                         return;
                     }
 
-                    var mainWindow = Application.Current?.MainWindow as View;
-                    if (mainWindow?.chart?.ViewPolar != null)
-                    {
-                        chartRenderer = new PolarChartRenderer(mainWindow.chart.ViewPolar, annotation);
-                        
-                        currentDataSet = dataProvider.GenerateDataSet(count);
-                        lastUpdateTime = DateTime.Now;
-                        
-                        RefreshAnnotations();
-                        
-                        timer.Interval = TimeSpan.FromMilliseconds(interval);
-                        timer.Start();
-                        
-                        // Enable/disable buttons
-                        stop = true;
-                        start = false;
-                    }
-                    else
-                    {
-                        MessageBox.Show("Chart not initialized", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    // Legacy PoC logic relied on directly accessing the window's LightningChart instance.
+                    // In the thin-shell setup, the chart is owned by PolarChartLib, so this ViewModel is no longer active.
+                    // Keep the method as a no-op to preserve compilation without runtime behavior.
                 }
                 catch (Exception ex)
                 {
@@ -319,19 +300,12 @@ namespace PolarChartPoC
         
         public void HandleMouseMove(Point mousePosition, double chartWidth, double chartHeight)
         {
-            if (!isMouseTrackingEnabledField || currentDataSet == null || chartRenderer == null)
-                return;
-
-            var mainWindow = Application.Current?.MainWindow as View;
-            if (mainWindow?.chart?.ViewPolar != null)
-            {
-            }
+            // Legacy mouse tracking logic has been moved into PolarChartLib.
         }
 
         public void HandleMouseClick(Point mousePosition)
         {
-            if (currentDataSet == null || chartRenderer == null)
-                return;
+            // Legacy mouse click logic has been moved into PolarChartLib.
         }
         
         #endregion

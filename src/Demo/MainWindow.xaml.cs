@@ -3,8 +3,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Demo.ViewModels;
-using LightningChartLib.WPF.Charting;
-using LightningChartMVVM = LightningChartLib.WPF.ChartingMVVM;
 
 namespace Demo
 {
@@ -14,7 +12,6 @@ namespace Demo
     public partial class MainWindow : Window, IDisposable
     {
         private MainViewModel? viewModel;
-        private LightningChart? surfaceChart;
 
         public MainWindow()
         {
@@ -29,17 +26,6 @@ namespace Demo
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             if (viewModel == null) return;
-
-            // Initialize Surface Chart (left side)
-            surfaceChart = new LightningChart();
-            gridSurfaceChartContainer.Children.Add(surfaceChart);
-            viewModel.SurfaceChart = surfaceChart;
-
-            // Initialize Polar Chart (right side) - already in XAML
-            if (polarChart != null)
-            {
-                viewModel.PolarChart = polarChart;
-            }
 
             // Update point count label
             UpdatePointCountLabel();
@@ -99,37 +85,8 @@ namespace Demo
             }
         }
 
-        private void PolarChart_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            // Handle polar chart selection
-            if (viewModel != null && polarChart != null)
-            {
-                Point mousePosition = e.GetPosition(polarChart);
-                viewModel.HandlePolarChartSelection(mousePosition);
-            }
-        }
-
-        private void PolarChart_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Delete && viewModel != null)
-            {
-                // For polar chart, deletion will be handled by selecting and pressing delete
-                // The selected index is tracked in MainViewModel
-                if (viewModel.SelectedPolarIndex.HasValue)
-                {
-                    viewModel.HandlePolarChartDeletion(viewModel.SelectedPolarIndex.Value);
-                    UpdatePointCountLabel();
-                }
-            }
-        }
-
         public void Dispose()
         {
-            if (surfaceChart != null)
-            {
-                gridSurfaceChartContainer.Children.Clear();
-            }
-            
             viewModel?.Dispose();
         }
     }

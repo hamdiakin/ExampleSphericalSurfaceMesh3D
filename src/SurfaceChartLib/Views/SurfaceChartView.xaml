@@ -1,0 +1,134 @@
+<UserControl x:Class="SurfaceChartLib.Views.SurfaceChartView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:vm="clr-namespace:SurfaceChartLib.ViewModels"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" Background="#202020">
+    <UserControl.DataContext>
+        <vm:SurfaceChartViewModel />
+    </UserControl.DataContext>
+    <Grid Name="gridBase">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="200"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0" Name="gridChart"/>
+        <Grid Margin="8" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="8"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Grid.Column="1">
+                <CheckBox Name="checkBoxSphericalGrid" IsChecked="{Binding IsSphericalGridVisible, Mode=TwoWay}" Foreground="White">Spherical grid</CheckBox>
+                <CheckBox Name="checkBoxHeadingGrid" IsChecked="{Binding IsHeadingGridVisible, Mode=TwoWay}" Foreground="White">Heading grid</CheckBox>
+                <Separator Margin="0,8,0,8" Background="Gray"/>
+                <Label Content="Annotations" Foreground="White" FontWeight="Bold" Margin="0,0,0,4"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="Count:" Grid.Column="0" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Grid.Column="1" Height="23" Text="{Binding AnnotationCountText, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" Margin="0,0,4,0"/>
+                    <Button Grid.Column="2" Content="+" Command="{Binding AddAnnotationCommand}" Width="30" Height="23" Margin="0,0,4,0"/>
+                </Grid>
+                <Button Content="Delete Last" Command="{Binding DeleteAnnotationCommand}" Margin="0,4,0,0" Height="25"/>
+                <CheckBox IsChecked="{Binding IsMouseTrackingEnabled, Mode=TwoWay}" Foreground="White" Margin="0,8,0,0" Content="Mouse Track"/>
+                <Separator Margin="0,8,0,8" Background="Gray"/>
+                <Label Content="Selection" Foreground="White" FontWeight="Bold" Margin="0,0,0,4"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="Enter ID:" Grid.Column="0" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Grid.Column="1" Height="23" Text="{Binding SelectIndexText, UpdateSourceTrigger=PropertyChanged}" ToolTip="Enter annotation index to select"/>
+                </Grid>
+                <Grid Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="Selected:" Grid.Column="0" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Grid.Column="1" Height="23" Text="{Binding SelectedAnnotationText, Mode=OneWay}" IsReadOnly="True" Background="#333"/>
+                </Grid>
+                <Button Content="Delete Selected" Command="{Binding DeleteSelectedAnnotationCommand}" Margin="0,4,0,0" Height="25" IsEnabled="{Binding HasSelectedAnnotation}"/>
+                <Button Content="Clear Selection" Command="{Binding ClearSelectionCommand}" Margin="0,4,0,0" Height="25" IsEnabled="{Binding HasSelectedAnnotation}"/>
+                <TextBlock Text="Indices shown on annotations" Foreground="Gray" FontSize="10" Margin="0,4,0,0"/>
+            </StackPanel>
+            <Grid Margin="0,8,0,0" VerticalAlignment="Top" Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="36"/>
+                        <RowDefinition Height="36"/>
+                        <RowDefinition Height="36"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Content="Width:" Height="28" Name="label2" Grid.Row="0" Grid.Column="0" Foreground="White"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" Height="23" Width="32" x:Name="textBoxExWidth" Text="{Binding WidthText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Grid.Row="0" Grid.Column="3" Content="Top view 2D" Name="buttonTopView2D" Command="{Binding TopView2DCommand}" Margin="2" />
+                    <Label Grid.Row="1" Grid.Column="0" Content="Height:" Height="28" Name="label3" Foreground="White"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" Height="23" Width="32" x:Name="textBoxExHeight" Text="{Binding HeightText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Label Grid.Row="2" Grid.Column="0" Content="Depth:" Height="28" Name="label4" Foreground="White"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Height="23" Width="32" x:Name="textBoxExDepth" Text="{Binding DepthText, UpdateSourceTrigger=PropertyChanged}"/>
+                </Grid>
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition Height="5"/>
+                    </Grid.RowDefinitions>
+                    <Label Grid.Row="0" Grid.Column="0" Height="28" Name="CameraModeLabel" Foreground="White">Camera Orientation</Label>
+                    <ComboBox Grid.Row="1" Grid.Column="0" Height="28" SelectedIndex="{Binding SelectedCameraIndex, Mode=TwoWay}" Name="comboBoxCamera" Margin="2">
+                        <ComboBoxItem>XYZ_Mixed</ComboBoxItem>
+                        <ComboBoxItem>ZXY_Extrinsic</ComboBoxItem>
+                    </ComboBox>
+                    <Label Grid.Row="2" Grid.Column="0" Height="28" Name="label6" Foreground="White">Projection type</Label>
+                    <ComboBox  Grid.Row="3" Grid.Column="0" Height="28" SelectedIndex="{Binding SelectedProjectionIndex, Mode=TwoWay}" Name="comboBoxProjection" Margin="2">
+                        <ComboBoxItem>Orthographic</ComboBoxItem>
+                        <ComboBoxItem>Orthographic Legacy</ComboBoxItem>
+                        <ComboBoxItem>Perspective</ComboBoxItem>
+                    </ComboBox>
+                    <Label Grid.Row="4" Grid.Column="0" Height="28" Name="label5" Foreground="White">Vertical rotation (pitch)</Label>
+                    <Slider Grid.Row="5" Grid.Column="0" Name="sliderVerticalRotation" Maximum="90" Minimum="-90" Value="{Binding VerticalRotation, Mode=TwoWay}" Margin="0,0,50,0"/>
+                    <Label Grid.Row="6" Grid.Column="0" Height="28" Name="label7" Foreground="White">Horizontal rotation (yaw)</Label>
+                    <Slider Grid.Row="7" Grid.Column="0" Name="sliderHorizontalRotation" Maximum="180" Minimum="-180" Value="{Binding HorizontalRotation, Mode=TwoWay}" Margin="0,0,50,0"/>
+                    <Label Grid.Row="8" Grid.Column="0" Height="28" Name="label8" Foreground="White">Side rotation (roll)</Label>
+                    <Slider Grid.Row="9" Grid.Column="0" Name="sliderSideRotation" Maximum="180" Minimum="-180" Value="{Binding SideRotation, Mode=TwoWay}" Margin="0,0,50,0"/>
+                    <Label Grid.Row="10" Grid.Column="0" Height="28" Name="label9" Foreground="White">Distance</Label>
+                    <Slider Grid.Row="11" Grid.Column="0" Name="sliderDistance" Minimum="10" Maximum="2000" IsEnabled="{Binding IsDistanceEnabled}" Value="{Binding Distance, Mode=TwoWay}" Cursor="" Margin="0,0,50,0"/>
+                    <TextBox x:Name="tbVerticalRotation" HorizontalAlignment="Right" Margin="0,0,5,0" Grid.Row="5" TextWrapping="Wrap" Width="35" Text="{Binding VerticalRotationText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox x:Name="tbHorizontalRotation" HorizontalAlignment="Right" Margin="0,0,5,0" Grid.Row="7" TextWrapping="Wrap" Width="35" Text="{Binding HorizontalRotationText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox x:Name="tbSideRotation" HorizontalAlignment="Right" Height="18" Margin="0,0,5,0" Grid.Row="9" TextWrapping="Wrap" VerticalAlignment="Top" Width="35" Text="{Binding SideRotationText, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox x:Name="tbDistance" HorizontalAlignment="Right" Height="18" Margin="0,0,5,0" Grid.Row="11" TextWrapping="Wrap" VerticalAlignment="Top" Width="35" Text="{Binding DistanceText, UpdateSourceTrigger=PropertyChanged}"/>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
+
