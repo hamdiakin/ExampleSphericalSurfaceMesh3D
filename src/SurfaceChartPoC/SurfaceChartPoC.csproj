@@ -19,6 +19,7 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Copyright>Copyright 2009-2025</Copyright>
     <Company>LightningChart Ltd</Company>
+    <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
     <EnableDefaultItems>true</EnableDefaultItems>

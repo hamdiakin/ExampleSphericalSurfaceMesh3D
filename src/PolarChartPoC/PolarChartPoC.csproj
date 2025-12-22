@@ -11,6 +11,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UseWPF>true</UseWPF>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+    <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LightningChart.DirectX">

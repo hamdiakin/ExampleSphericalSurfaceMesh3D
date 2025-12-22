@@ -12,6 +12,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
