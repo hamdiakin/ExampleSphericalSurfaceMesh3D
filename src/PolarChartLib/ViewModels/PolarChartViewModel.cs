@@ -145,10 +145,14 @@ namespace PolarChartLib.ViewModels
 
         #region Constructor
 
-        public PolarChartViewModel()
+        public PolarChartViewModel() : this(null, null)
         {
-            dataProvider = new SphereDataSetProvider();
-            annotationFactory = new SphereAnnotationFactory();
+        }
+
+        public PolarChartViewModel(IDataSetProvider? dataProvider, IAnnotationFactory? annotationFactory)
+        {
+            this.dataProvider = dataProvider ?? new SphereDataSetProvider();
+            this.annotationFactory = annotationFactory ?? new SphereAnnotationFactory();
 
             startCommand = new RelayCommand(_ => StartMethod(null));
             stopCommand = new RelayCommand(_ => StopMethod(null));
@@ -282,6 +286,21 @@ namespace PolarChartLib.ViewModels
         #endregion
 
         #region Annotations
+
+        /// <summary>
+        /// Refreshes the chart data from the external data provider.
+        /// Called when shared data changes to synchronize the chart.
+        /// </summary>
+        public void RefreshData()
+        {
+            if (chartRenderer == null || viewPolar == null)
+                return;
+
+            var dataSet = dataProvider.GenerateDataSet(0);
+            currentDataSet = dataSet;
+            
+            RefreshAnnotations();
+        }
 
         private void RefreshAnnotations()
         {

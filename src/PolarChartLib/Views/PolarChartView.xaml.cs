@@ -24,6 +24,27 @@ namespace PolarChartLib.Views
             Loaded += OnLoaded;
         }
 
+        /// <summary>
+        /// Gets or sets the ViewModel for this view.
+        /// If set externally, replaces the default ViewModel.
+        /// </summary>
+        public PolarChartViewModel? ChartViewModel
+        {
+            get => viewModel;
+            set
+            {
+                if (viewModel != value)
+                {
+                    viewModel = value;
+                    DataContext = viewModel;
+                    if (IsLoaded && viewModel != null && chart.ViewPolar != null)
+                    {
+                        viewModel.AttachChart(chart, chart.ViewPolar);
+                    }
+                }
+            }
+        }
+
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             if (viewModel != null && chart.ViewPolar != null)

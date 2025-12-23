@@ -26,6 +26,24 @@ namespace SurfaceChartLib.Views
             Loaded += OnLoaded;
         }
 
+        /// <summary>
+        /// Gets or sets the ViewModel for this view.
+        /// If set externally, replaces the default ViewModel.
+        /// </summary>
+        public SurfaceChartViewModel? ChartViewModel
+        {
+            get => viewModel;
+            set
+            {
+                if (viewModel != value)
+                {
+                    viewModel?.Dispose();
+                    viewModel = value;
+                    DataContext = viewModel;
+                }
+            }
+        }
+
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             if (viewModel != null && chart == null)

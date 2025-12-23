@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Demo.ViewModels;
+using PolarChartLib.Views;
+using SurfaceChartLib.Views;
 
 namespace Demo
 {
@@ -27,20 +29,39 @@ namespace Demo
         {
             if (viewModel == null) return;
 
+            // Initialize SurfaceChartViewModel and wire it to the view
+            viewModel.InitializeSurfaceChartViewModel();
+            if (viewModel.SurfaceChartViewModel != null)
+            {
+                var surfaceChartView = FindName("gridSurfaceChart") as Grid;
+                if (surfaceChartView?.Children.Count > 0 && surfaceChartView.Children[0] is SurfaceChartLib.Views.SurfaceChartView chartView)
+                {
+                    chartView.ChartViewModel = viewModel.SurfaceChartViewModel;
+                }
+            }
+
+            // Initialize PolarChartViewModel and wire it to the view
+            viewModel.InitializePolarChartViewModel();
+            if (viewModel.PolarChartViewModel != null)
+            {
+                var polarChartView = FindName("gridPolarChart") as Grid;
+                if (polarChartView?.Children.Count > 0 && polarChartView.Children[0] is PolarChartLib.Views.PolarChartView chartView)
+                {
+                    chartView.ChartViewModel = viewModel.PolarChartViewModel;
+                }
+            }
+
             // Update point count label
             UpdatePointCountLabel();
             
             // Subscribe to PropertyChanged for point count updates
-            if (viewModel != null)
+            viewModel.PropertyChanged += (s, e) =>
             {
-                viewModel.PropertyChanged += (s, e) =>
+                if (e.PropertyName == nameof(MainViewModel.DataPointCount))
                 {
-                    if (e.PropertyName == nameof(MainViewModel.DataPointCount))
-                    {
-                        UpdatePointCountLabel();
-                    }
-                };
-            }
+                    UpdatePointCountLabel();
+                }
+            };
         }
 
         private void BtnGenerate_Click(object sender, RoutedEventArgs e)

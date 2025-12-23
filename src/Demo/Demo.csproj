@@ -19,8 +19,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SurfaceChartPoC\SurfaceChartPoC.csproj" />
-    <ProjectReference Include="..\PolarChartPoC\PolarChartPoC.csproj" />
     <ProjectReference Include="..\\Common\\Common.csproj" />
     <ProjectReference Include="..\SurfaceChartLib\SurfaceChartLib.csproj" />
     <ProjectReference Include="..\PolarChartLib\PolarChartLib.csproj" />

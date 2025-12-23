@@ -2,7 +2,9 @@ using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using Common.Annotations;
 using Common.Commands;
+using Common.Providers;
 using LightningChartLib.WPF.Charting;
 using LightningChartLib.WPF.Charting.Annotations;
 using LightningChartLib.WPF.Charting.Series3D;
@@ -65,6 +67,8 @@ namespace SurfaceChartLib.ViewModels
         private readonly CameraService cameraService;
         private readonly MouseTrackingService mouseTrackingService;
         private DataPointAnnotationService? dataPointAnnotationService;
+        private readonly IDataSetProvider? externalDataProvider;
+        private readonly IAnnotationFactory? externalAnnotationFactory;
 
         #endregion
 
@@ -77,8 +81,14 @@ namespace SurfaceChartLib.ViewModels
 
         #region Constructor
 
-        public SurfaceChartViewModel()
+        public SurfaceChartViewModel() : this(null, null)
         {
+        }
+
+        public SurfaceChartViewModel(IDataSetProvider? dataProvider, IAnnotationFactory? annotationFactory)
+        {
+            externalDataProvider = dataProvider;
+            externalAnnotationFactory = annotationFactory;
             dataService = new SphericalDataService();
             chartSetupService = new ChartSetupService(dataService);
             cameraService = new CameraService();
@@ -109,6 +119,11 @@ namespace SurfaceChartLib.ViewModels
         }
 
         internal DataPointAnnotationService? DataPointAnnotationService => dataPointAnnotationService;
+
+        /// <summary>
+        /// Gets the index of the currently selected annotation, or null if none is selected.
+        /// </summary>
+        public int? SelectedAnnotationIndex => dataPointAnnotationService?.SelectedAnnotationIndex;
 
         #endregion
 
@@ -420,8 +435,13 @@ namespace SurfaceChartLib.ViewModels
             headingGrid = chartSetupService.CreateHeadingGrid(view3D, isHeadingGridVisible);
             mouseTrackAnnotation = chartSetupService.CreateMouseTrackAnnotation(view3D);
 
-            dataPointAnnotationService = new DataPointAnnotationService(view3D);
-            dataPointAnnotationService.GenerateDataPoints(50);
+            var dataProvider = externalDataProvider ?? new SphereDataSetProvider();
+            var annotationFactory = externalAnnotationFactory ?? new SphereAnnotationFactory();
+            dataPointAnnotationService = new DataPointAnnotationService(view3D, dataProvider, annotationFactory);
+            
+            // Generate initial data points - use count from current dataset if available
+            var initialDataSet = dataProvider.GenerateDataSet(50);
+            dataPointAnnotationService.GenerateDataPoints(initialDataSet.DataPoints.Count);
             dataPointAnnotationService.SetMouseTrackingEnabled(isMouseTrackingEnabled);
             UpdateAnnotationCountText();
 
@@ -434,6 +454,25 @@ namespace SurfaceChartLib.ViewModels
             SetControlValuesFromChart();
             SetViewPoint();
             StartDataPointAnimation();
+        }
+
+        /// <summary>
+        /// Refreshes the chart data from the external data provider.
+        /// Called when shared data changes to synchronize the chart.
+        /// </summary>
+        public void RefreshData()
+        {
+            if (dataPointAnnotationService == null || chart == null) return;
+
+            var dataProvider = externalDataProvider ?? new SphereDataSetProvider();
+            var dataSet = dataProvider.GenerateDataSet(0);
+            int pointCount = dataSet.DataPoints.Count;
+            
+            if (pointCount > 0)
+            {
+                dataPointAnnotationService.GenerateDataPoints(pointCount);
+                UpdateAnnotationCountText();
+            }
         }
 
         private void InitializeViewReference()
