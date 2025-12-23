@@ -1,0 +1,35 @@
+<Window x:Class="Polar2DPoC.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:Polar2DPoC"
+        xmlns:polar="clr-namespace:PolarChartLib.Views;assembly=PolarChartLib"
+        mc:Ignorable="d" 
+        Title="Polar 2D Chart PoC" Height="700" Width="900" Background="#202020">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Control Panel -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8" Background="#2A2A2A">
+            <Label Content="Data Points:" Foreground="White" VerticalAlignment="Center" Margin="8,0,4,0"/>
+            <TextBox Name="txtDataPointCount" Width="60" Text="50" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <Button Name="btnGenerate" Content="Generate Dataset" Click="BtnGenerate_Click" Margin="0,0,8,0" Padding="8,4"/>
+            <Separator Margin="8,0"/>
+            <Button Name="btnStart" Content="Start" Click="BtnStart_Click" Margin="0,0,4,0" Padding="8,4" Width="60"/>
+            <Button Name="btnStop" Content="Stop" Click="BtnStop_Click" Margin="0,0,8,0" Padding="8,4" Width="60"/>
+            <Separator Margin="8,0"/>
+            <CheckBox Name="chkMouseTracking" Content="Mouse Tracking" IsChecked="True" Foreground="White" VerticalAlignment="Center" Margin="8,0,8,0" Checked="ChkMouseTracking_Checked" Unchecked="ChkMouseTracking_Unchecked"/>
+            <Label Name="lblPointCount" Content="Points: 0" Foreground="White" VerticalAlignment="Center" Margin="8,0"/>
+        </StackPanel>
+        
+        <!-- Polar Chart -->
+        <Grid Grid.Row="1" Name="gridPolarChart" Background="#1A1A1A">
+            <polar:PolarChartView />
+        </Grid>
+    </Grid>
+</Window>
+
