@@ -37,6 +37,7 @@ namespace SurfaceChartLib.Services
         private int? hoveredAnnotationIndex = null;
         private bool isMouseTrackingEnabled = true;
         private int? selectedAnnotationIndex = null;
+        private bool isAltitudeAnnotationsVisible = false;
 
         private bool isBatchUpdate = false;
         private readonly HashSet<int> pendingTextUpdates = new HashSet<int>();
@@ -73,6 +74,8 @@ namespace SurfaceChartLib.Services
         public int AnnotationCount => annotations.Count;
 
         public int? SelectedAnnotationIndex => selectedAnnotationIndex;
+
+        public bool IsAltitudeAnnotationsVisible => isAltitudeAnnotationsVisible;
 
         #endregion
 
@@ -202,25 +205,33 @@ namespace SurfaceChartLib.Services
                 }
             }
 
-            if (hasSelection && selectionIdx < count)
+            // If altitude annotations are visible, refresh them
+            if (isAltitudeAnnotationsVisible)
             {
-                UpdateSelectedAnnotationTextOptimized(selectionIdx);
+                RefreshAltitudeAnnotations();
             }
-
-            int hoveredIdx = hoveredAnnotationIndex ?? -1;
-            if (showAllTexts)
+            else
             {
-                for (int i = 0; i < count; i++)
+                if (hasSelection && selectionIdx < count)
                 {
-                    if (i != selectionIdx)
+                    UpdateSelectedAnnotationTextOptimized(selectionIdx);
+                }
+
+                int hoveredIdx = hoveredAnnotationIndex ?? -1;
+                if (showAllTexts)
+                {
+                    for (int i = 0; i < count; i++)
                     {
-                        UpdateAnnotationTextOptimized(i);
+                        if (i != selectionIdx)
+                        {
+                            UpdateAnnotationTextOptimized(i);
+                        }
                     }
                 }
-            }
-            else if (hoveredIdx >= 0 && hoveredIdx < count && hoveredIdx != selectionIdx)
-            {
-                UpdateAnnotationTextOptimized(hoveredIdx);
+                else if (hoveredIdx >= 0 && hoveredIdx < count && hoveredIdx != selectionIdx)
+                {
+                    UpdateAnnotationTextOptimized(hoveredIdx);
+                }
             }
         }
 
@@ -585,6 +596,147 @@ namespace SurfaceChartLib.Services
                 annotations[i].Text = string.Empty;
             }
             hoveredAnnotationIndex = null;
+        }
+
+        #endregion
+
+        #region Altitude Annotations
+
+        /// <summary>
+        /// Toggles the visibility of altitude annotations for all data points.
+        /// When enabled, displays the altitude (distance from center) value at each point.
+        /// </summary>
+        public void SetAltitudeAnnotationsVisible(bool visible)
+        {
+            isAltitudeAnnotationsVisible = visible;
+
+            if (visible)
+            {
+                ShowAllAltitudeAnnotations();
+            }
+            else
+            {
+                ClearAllAltitudeAnnotations();
+            }
+        }
+
+        /// <summary>
+        /// Shows altitude annotation text for all data points.
+        /// The altitude is the radius (distance from center) in spherical coordinates.
+        /// </summary>
+        private void ShowAllAltitudeAnnotations()
+        {
+            int count = Math.Min(annotations.Count, dataPoints.Count);
+            int selectionIdx = selectedAnnotationIndex ?? -1;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (i == selectionIdx)
+                {
+                    // Update selected annotation to include altitude
+                    UpdateSelectedAnnotationWithAltitude(i);
+                }
+                else
+                {
+                    UpdateAnnotationWithAltitude(i);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Clears altitude annotations from all data points.
+        /// </summary>
+        private void ClearAllAltitudeAnnotations()
+        {
+            int selectionIdx = selectedAnnotationIndex ?? -1;
+
+            for (int i = 0; i < annotations.Count; i++)
+            {
+                if (i == selectionIdx)
+                {
+                    // Keep selected annotation text but remove altitude
+                    UpdateSelectedAnnotationTextOptimized(i);
+                }
+                else if (!isMouseTrackingEnabled)
+                {
+                    // If mouse tracking is disabled, show regular text
+                    UpdateAnnotationTextOptimized(i);
+                }
+                else
+                {
+                    annotations[i].Text = string.Empty;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates a single annotation with altitude information.
+        /// </summary>
+        private void UpdateAnnotationWithAltitude(int index)
+        {
+            if (index < 0 || index >= annotations.Count || index >= dataPoints.Count) return;
+
+            Annotation3D annotation = annotations[index];
+            SphereDataPoint dataPoint = dataPoints[index];
+
+            // Calculate altitude (radius/distance from center)
+            double altitude = Math.Sqrt(dataPoint.X * dataPoint.X + dataPoint.Y * dataPoint.Y + dataPoint.Z * dataPoint.Z);
+
+            stringBuilder.Clear();
+            stringBuilder.Append("Alt: ");
+            stringBuilder.Append(altitude.ToString("F1"));
+
+            annotation.Text = stringBuilder.ToString();
+            annotation.Anchor.Y = 1;
+        }
+
+        /// <summary>
+        /// Updates a selected annotation to include altitude information.
+        /// </summary>
+        private void UpdateSelectedAnnotationWithAltitude(int index)
+        {
+            if (index < 0 || index >= annotations.Count || index >= dataPoints.Count) return;
+
+            Annotation3D annotation = annotations[index];
+            SphereDataPoint dataPoint = dataPoints[index];
+
+            // Calculate altitude (radius/distance from center)
+            double altitude = Math.Sqrt(dataPoint.X * dataPoint.X + dataPoint.Y * dataPoint.Y + dataPoint.Z * dataPoint.Z);
+
+            stringBuilder.Clear();
+            stringBuilder.Append(">>> [").Append(index).Append("] <<<\nX: ");
+            stringBuilder.Append(dataPoint.X.ToString("F1"));
+            stringBuilder.Append("\nY: ");
+            stringBuilder.Append(dataPoint.Y.ToString("F1"));
+            stringBuilder.Append("\nAlt: ");
+            stringBuilder.Append(altitude.ToString("F1"));
+
+            annotation.Text = stringBuilder.ToString();
+            annotation.Anchor.Y = 1;
+        }
+
+        /// <summary>
+        /// Refreshes altitude annotations during animation updates.
+        /// Call this method when data points move to update their altitude values.
+        /// </summary>
+        public void RefreshAltitudeAnnotations()
+        {
+            if (!isAltitudeAnnotationsVisible) return;
+
+            int count = Math.Min(annotations.Count, dataPoints.Count);
+            int selectionIdx = selectedAnnotationIndex ?? -1;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (i == selectionIdx)
+                {
+                    UpdateSelectedAnnotationWithAltitude(i);
+                }
+                else
+                {
+                    UpdateAnnotationWithAltitude(i);
+                }
+            }
         }
 
         #endregion

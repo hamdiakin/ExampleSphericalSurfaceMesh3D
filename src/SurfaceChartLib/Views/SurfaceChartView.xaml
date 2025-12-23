@@ -38,6 +38,7 @@
                 </Grid>
                 <Button Content="Delete Last" Command="{Binding DeleteAnnotationCommand}" Margin="0,4,0,0" Height="25"/>
                 <CheckBox IsChecked="{Binding IsMouseTrackingEnabled, Mode=TwoWay}" Foreground="White" Margin="0,8,0,0" Content="Mouse Track"/>
+                <CheckBox IsChecked="{Binding IsAltitudeAnnotationsVisible, Mode=TwoWay}" Foreground="White" Margin="0,4,0,0" Content="Show Altitude Labels"/>
                 <Separator Margin="0,8,0,8" Background="Gray"/>
                 <Label Content="Selection" Foreground="White" FontWeight="Bold" Margin="0,0,0,4"/>
                 <Grid>

@@ -57,6 +57,7 @@ namespace SurfaceChartLib.ViewModels
         private string selectedAnnotationText = "None";
         private bool hasSelectedAnnotation = false;
         private string selectIndexText = "";
+        private bool isAltitudeAnnotationsVisible = false;
 
         #endregion
 
@@ -100,6 +101,7 @@ namespace SurfaceChartLib.ViewModels
             ToggleMouseTrackingCommand = new RelayCommand(_ => ExecuteToggleMouseTracking(), _ => CanExecuteAnnotationCommand());
             DeleteSelectedAnnotationCommand = new RelayCommand(_ => ExecuteDeleteSelectedAnnotation(), _ => HasSelectedAnnotation);
             ClearSelectionCommand = new RelayCommand(_ => ExecuteClearSelection(), _ => HasSelectedAnnotation);
+            ToggleAltitudeAnnotationsCommand = new RelayCommand(_ => ExecuteToggleAltitudeAnnotations(), _ => CanExecuteAnnotationCommand());
         }
 
         #endregion
@@ -364,6 +366,7 @@ namespace SurfaceChartLib.ViewModels
         public ICommand ToggleMouseTrackingCommand { get; }
         public ICommand DeleteSelectedAnnotationCommand { get; }
         public ICommand ClearSelectionCommand { get; }
+        public ICommand ToggleAltitudeAnnotationsCommand { get; }
 
         #endregion
 
@@ -412,6 +415,25 @@ namespace SurfaceChartLib.ViewModels
                     if (int.TryParse(value, out int index))
                     {
                         SelectAnnotationByIndex(index);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether altitude annotations are visible for all data points.
+        /// When enabled, displays the altitude (distance from center) value at each point.
+        /// </summary>
+        public bool IsAltitudeAnnotationsVisible
+        {
+            get => isAltitudeAnnotationsVisible;
+            set
+            {
+                if (SetProperty(ref isAltitudeAnnotationsVisible, value))
+                {
+                    if (dataPointAnnotationService != null)
+                    {
+                        dataPointAnnotationService.SetAltitudeAnnotationsVisible(value);
                     }
                 }
             }
@@ -706,6 +728,11 @@ namespace SurfaceChartLib.ViewModels
         private void ExecuteToggleMouseTracking()
         {
             IsMouseTrackingEnabled = !IsMouseTrackingEnabled;
+        }
+
+        private void ExecuteToggleAltitudeAnnotations()
+        {
+            IsAltitudeAnnotationsVisible = !IsAltitudeAnnotationsVisible;
         }
 
         private void ExecuteDeleteSelectedAnnotation()
