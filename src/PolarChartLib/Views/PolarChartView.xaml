@@ -47,11 +47,31 @@
                 <Button Width="75" Command="{Binding StopCommand}" IsEnabled="{Binding stop,Mode=TwoWay}" Name="buttonStop">Stop</Button>
             </StackPanel>
             
+            <Separator Margin="0,12,0,8" Background="Gray"/>
+            <Label Content="Selection" Foreground="White" FontWeight="Bold" Margin="0,0,0,4"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="Enter ID:" Grid.Column="0" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox Grid.Column="1" Height="23" Text="{Binding selectIndexText, UpdateSourceTrigger=PropertyChanged}" ToolTip="Enter annotation index to select"/>
+            </Grid>
+            <Grid Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="Selected:" Grid.Column="0" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox Grid.Column="1" Height="23" Text="{Binding selectedAnnotationText, Mode=OneWay}" IsReadOnly="True" Background="#333"/>
+            </Grid>
+            <Button Content="Delete Selected" Command="{Binding DeleteSelectedCommand}" Margin="0,4,0,0" Height="25" IsEnabled="{Binding hasSelectedAnnotation}"/>
+            <Button Content="Clear Selection" Command="{Binding ClearSelectionCommand}" Margin="0,4,0,0" Height="25" IsEnabled="{Binding hasSelectedAnnotation}"/>
+            
             <Grid Height="16"/>
             <TextBlock Text="Info:" FontWeight="Bold" Foreground="White" Margin="0,0,0,4"/>
             <TextBlock TextWrapping="Wrap" FontSize="10" Foreground="Gray">
-                This demo shows the same dataset as the 3D spherical surface demo, rendered on a polar chart. 
-                Annotations rotate clockwise at individual paces.
+                Click on annotations to select. Use mouse tracking for hover effects.
             </TextBlock>
         </StackPanel>
     </Grid>

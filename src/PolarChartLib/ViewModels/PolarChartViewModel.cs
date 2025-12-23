@@ -39,6 +39,8 @@ namespace PolarChartLib.ViewModels
 
         public ICommand StartCommand => startCommand;
         public ICommand StopCommand => stopCommand;
+        public ICommand DeleteSelectedCommand { get; }
+        public ICommand ClearSelectionCommand { get; }
 
         internal bool IsRunning => timer?.IsEnabled ?? false;
 
@@ -161,6 +163,57 @@ namespace PolarChartLib.ViewModels
                 vm.RefreshAnnotations();
             }
         }
+
+        public static readonly DependencyProperty SelectedAnnotationTextProperty =
+            DependencyProperty.Register(
+                "selectedAnnotationText",
+                typeof(string),
+                typeof(PolarChartViewModel),
+                new PropertyMetadata("None"));
+
+        public string selectedAnnotationText
+        {
+            get => (string)GetValue(SelectedAnnotationTextProperty);
+            set => SetValue(SelectedAnnotationTextProperty, value);
+        }
+
+        public static readonly DependencyProperty HasSelectedAnnotationProperty =
+            DependencyProperty.Register(
+                "hasSelectedAnnotation",
+                typeof(bool),
+                typeof(PolarChartViewModel),
+                new PropertyMetadata(false));
+
+        public bool hasSelectedAnnotation
+        {
+            get => (bool)GetValue(HasSelectedAnnotationProperty);
+            set => SetValue(HasSelectedAnnotationProperty, value);
+        }
+
+        public static readonly DependencyProperty SelectIndexTextProperty =
+            DependencyProperty.Register(
+                "selectIndexText",
+                typeof(string),
+                typeof(PolarChartViewModel),
+                new PropertyMetadata("", OnSelectIndexTextChanged));
+
+        public string selectIndexText
+        {
+            get => (string)GetValue(SelectIndexTextProperty);
+            set => SetValue(SelectIndexTextProperty, value);
+        }
+
+        private static void OnSelectIndexTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is PolarChartViewModel vm && e.NewValue is string text)
+            {
+                if (int.TryParse(text, out int index))
+                {
+                    vm.SelectAnnotationByIndex(index);
+                }
+            }
+        }
+
         public PolarChartViewModel() : this(null, null)
         {
         }
@@ -172,6 +225,8 @@ namespace PolarChartLib.ViewModels
 
             startCommand = new RelayCommand(_ => StartMethod(null));
             stopCommand = new RelayCommand(_ => StopMethod(null));
+            DeleteSelectedCommand = new RelayCommand(_ => DeleteSelectedAnnotation(), _ => hasSelectedAnnotation);
+            ClearSelectionCommand = new RelayCommand(_ => ClearSelection(), _ => hasSelectedAnnotation);
 
             axes = new AxisPolarCollection();
             var model = new PolarChartModel();
@@ -340,7 +395,90 @@ namespace PolarChartLib.ViewModels
                 0);
 
             selectedIndex = chartRenderer.FindNearestAnnotation(angle, amplitude);
+            UpdateSelectedAnnotationInfo();
             RefreshAnnotations();
+        }
+
+        /// <summary>
+        /// Selects an annotation by its index.
+        /// </summary>
+        public void SelectAnnotationByIndex(int index)
+        {
+            if (currentDataSet == null || index < 0 || index >= currentDataSet.DataPoints.Count)
+            {
+                selectedIndex = null;
+            }
+            else
+            {
+                selectedIndex = index;
+            }
+            UpdateSelectedAnnotationInfo();
+            RefreshAnnotations();
+        }
+
+        /// <summary>
+        /// Deletes the currently selected annotation.
+        /// </summary>
+        public void DeleteSelectedAnnotation()
+        {
+            if (!selectedIndex.HasValue || currentDataSet == null)
+                return;
+
+            int indexToDelete = selectedIndex.Value;
+            if (indexToDelete < 0 || indexToDelete >= currentDataSet.DataPoints.Count)
+                return;
+
+            // Create a new list without the deleted point
+            var newPoints = new System.Collections.Generic.List<SphereDataPoint>(currentDataSet.DataPoints);
+            newPoints.RemoveAt(indexToDelete);
+
+            currentDataSet = new ProcessedDataSet
+            {
+                DataPoints = newPoints,
+                GeneratedAt = currentDataSet.GeneratedAt
+            };
+
+            // Update hovered index if needed
+            if (hoveredIndex.HasValue)
+            {
+                if (hoveredIndex.Value == indexToDelete)
+                    hoveredIndex = null;
+                else if (hoveredIndex.Value > indexToDelete)
+                    hoveredIndex--;
+            }
+
+            selectedIndex = null;
+            UpdateSelectedAnnotationInfo();
+            RefreshAnnotations();
+        }
+
+        /// <summary>
+        /// Clears the current selection.
+        /// </summary>
+        public void ClearSelection()
+        {
+            selectedIndex = null;
+            UpdateSelectedAnnotationInfo();
+            RefreshAnnotations();
+        }
+
+        /// <summary>
+        /// Updates the selected annotation info properties.
+        /// </summary>
+        private void UpdateSelectedAnnotationInfo()
+        {
+            if (selectedIndex.HasValue && currentDataSet != null && selectedIndex.Value < currentDataSet.DataPoints.Count)
+            {
+                var point = currentDataSet.DataPoints[selectedIndex.Value];
+                double altitude = Math.Sqrt(point.X * point.X + point.Y * point.Y + point.Z * point.Z);
+                selectedAnnotationText = $"ID: {selectedIndex.Value}, Alt: {altitude:F1}";
+                hasSelectedAnnotation = true;
+            }
+            else
+            {
+                selectedAnnotationText = "None";
+                hasSelectedAnnotation = false;
+            }
         }
     }
 }
