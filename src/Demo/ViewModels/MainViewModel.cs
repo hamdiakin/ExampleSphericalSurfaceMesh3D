@@ -159,9 +159,6 @@ namespace Demo.ViewModels
             }
         }
 
-        #endregion
-
-
         private void StartAnimation()
         {
             if (animationTimer != null) return;
@@ -184,9 +181,6 @@ namespace Demo.ViewModels
             // Surface chart animation is handled by SurfaceChartViewModel internally
             // Polar chart animation is handled by PolarChartViewModel internally
         }
-
-        #endregion
-
 
         public void Dispose()
         {

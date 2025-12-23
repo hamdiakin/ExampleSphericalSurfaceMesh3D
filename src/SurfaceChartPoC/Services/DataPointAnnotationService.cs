@@ -39,8 +39,10 @@ namespace SurfaceChartPoC.Services
         // Camera state for projection
         private double lastRotX;
         private double lastRotY;
+        private double lastRotZ;
         private double lastChartWidth;
         private double lastChartHeight;
+        private double lastViewDistance;
         private LightningChart? lastChart;
 
         // State tracking
@@ -55,6 +57,9 @@ namespace SurfaceChartPoC.Services
         // Last mouse position for re-evaluation after animation
         private Point lastMousePosition;
         private bool hasLastMousePosition = false;
+        
+        // Reduced threshold for more precise hit detection
+        private const double DefaultProximityThreshold = 35.0;
 
         #endregion
 
@@ -312,8 +317,8 @@ namespace SurfaceChartPoC.Services
         }
 
         /// <summary>
-        /// Updates all cached screen positions for fast mouse proximity detection.
-        /// Call this once per frame after positions change.
+        /// Updates all cached screen positions using improved 3D to 2D projection.
+        /// Uses full rotation matrix including roll (Z rotation) and accounts for view distance.
         /// </summary>
         private void UpdateAllScreenPositions(LightningChart chart)
         {
@@ -321,23 +326,36 @@ namespace SurfaceChartPoC.Services
 
             double chartWidth = chart.ActualWidth;
             double chartHeight = chart.ActualHeight;
-            double rotX = chart.View3D.Camera.RotationX * Math.PI / 180.0;
-            double rotY = chart.View3D.Camera.RotationY * Math.PI / 180.0;
+            
+            // Get all rotation angles in radians
+            double rotX = chart.View3D.Camera.RotationX * Math.PI / 180.0;  // Pitch
+            double rotY = chart.View3D.Camera.RotationY * Math.PI / 180.0;  // Yaw
+            double rotZ = chart.View3D.Camera.RotationZ * Math.PI / 180.0;  // Roll
+            double viewDistance = chart.View3D.Camera.ViewDistance;
 
-            // Cache trig values
-            double cosY = Math.Cos(rotY);
-            double sinY = Math.Sin(rotY);
+            // Cache trig values for all three rotations
             double cosX = Math.Cos(rotX);
             double sinX = Math.Sin(rotX);
+            double cosY = Math.Cos(rotY);
+            double sinY = Math.Sin(rotY);
+            double cosZ = Math.Cos(rotZ);
+            double sinZ = Math.Sin(rotZ);
+
             double centerX = chartWidth / 2.0;
             double centerY = chartHeight / 2.0;
-            double scale = Math.Min(chartWidth, chartHeight) / 300.0;
+            
+            // Improved scale calculation considering view distance and chart dimensions
+            double baseScale = Math.Min(chartWidth, chartHeight) / 200.0;
+            double distanceScale = 100.0 / Math.Max(viewDistance, 10.0);
+            double scale = baseScale * distanceScale;
 
-            // Store for later use
+            // Store for change detection
             lastRotX = rotX;
             lastRotY = rotY;
+            lastRotZ = rotZ;
             lastChartWidth = chartWidth;
             lastChartHeight = chartHeight;
+            lastViewDistance = viewDistance;
 
             // Ensure list has correct capacity
             while (cachedScreenPositions.Count < dataPoints.Count)
@@ -349,24 +367,37 @@ namespace SurfaceChartPoC.Services
                 cachedScreenPositions.RemoveAt(cachedScreenPositions.Count - 1);
             }
 
+            // Get dimensions for proper scaling
+            double dimWidth = chart.View3D.Dimensions.Width;
+            double dimHeight = chart.View3D.Dimensions.Height;
+            double dimDepth = chart.View3D.Dimensions.Depth;
+            double maxDim = Math.Max(Math.Max(dimWidth, dimHeight), dimDepth);
+            double normScale = maxDim > 0 ? 100.0 / maxDim : 1.0;
+
             // Update all screen positions
             for (int i = 0; i < dataPoints.Count; i++)
             {
                 var dp = dataPoints[i];
-                double x = dp.X;
-                double y = dp.Y;
-                double z = dp.Z;
+                double x = dp.X * normScale;
+                double y = dp.Y * normScale;
+                double z = dp.Z * normScale;
 
-                // Rotate around Y axis
+                // Apply full rotation matrix: Rz * Rx * Ry (matching LightningChart's convention)
+                // First rotate around Y (yaw)
                 double x1 = x * cosY + z * sinY;
                 double z1 = -x * sinY + z * cosY;
 
-                // Rotate around X axis
-                double y1 = y * cosX - z1 * sinX;
+                // Then rotate around X (pitch)
+                double y2 = y * cosX - z1 * sinX;
+                double z2 = y * sinX + z1 * cosX;
 
-                // Project to screen
-                double screenX = centerX + x1 * scale;
-                double screenY = centerY - y1 * scale;
+                // Finally rotate around Z (roll)
+                double x3 = x1 * cosZ - y2 * sinZ;
+                double y3 = x1 * sinZ + y2 * cosZ;
+
+                // Project to screen coordinates
+                double screenX = centerX + x3 * scale;
+                double screenY = centerY - y3 * scale;
 
                 cachedScreenPositions[i] = (screenX, screenY);
             }
@@ -376,11 +407,11 @@ namespace SurfaceChartPoC.Services
         /// Re-evaluates hover state based on cached screen positions and last mouse position.
         /// Called after animation updates to keep hover tracking smooth.
         /// </summary>
-        private void ReEvaluateHoverState(double proximityThreshold = 80.0)
+        private void ReEvaluateHoverState()
         {
             if (!hasLastMousePosition || cachedScreenPositions.Count == 0) return;
 
-            int? newHoveredIndex = FindNearestAnnotationFromCache(lastMousePosition, proximityThreshold);
+            int? newHoveredIndex = FindNearestAnnotationFromCache(lastMousePosition, DefaultProximityThreshold);
 
             // Only update if hover state changed
             if (newHoveredIndex != hoveredAnnotationIndex)
@@ -556,9 +587,19 @@ namespace SurfaceChartPoC.Services
         /// <param name="chart">The LightningChart instance</param>
         /// <param name="mousePosition">Mouse position in screen coordinates</param>
         /// <param name="proximityThreshold">Distance threshold in pixels for considering mouse "near" an annotation</param>
-        public void HandleMouseMove(LightningChart chart, Point mousePosition, double proximityThreshold = 80.0)
+        /// <summary>
+        /// Handles mouse move events for hover detection.
+        /// Always updates screen positions for accurate hit detection.
+        /// </summary>
+        public void HandleMouseMove(LightningChart chart, Point mousePosition, double proximityThreshold = -1)
         {
             if (chart == null || annotations.Count == 0) return;
+
+            // Use default threshold if not specified
+            if (proximityThreshold < 0)
+            {
+                proximityThreshold = DefaultProximityThreshold;
+            }
 
             // Store last mouse position for re-evaluation after animation
             lastMousePosition = mousePosition;
@@ -568,11 +609,9 @@ namespace SurfaceChartPoC.Services
             // If mouse tracking is disabled, don't process mouse movement
             if (!isMouseTrackingEnabled) return;
 
-            // Update screen positions if needed (first time or camera changed)
-            if (cachedScreenPositions.Count != dataPoints.Count)
-            {
-                UpdateAllScreenPositions(chart);
-            }
+            // Always update screen positions on mouse move for accurate detection
+            // This ensures positions are current even when animation is paused or slow
+            UpdateAllScreenPositions(chart);
 
             int? nearestIndex = FindNearestAnnotationFromCache(mousePosition, proximityThreshold);
 
@@ -596,32 +635,29 @@ namespace SurfaceChartPoC.Services
         }
 
         /// <summary>
-        /// Finds the nearest annotation using pre-cached screen positions.
-        /// This is O(n) but extremely fast since it's just array iteration with simple math.
-        /// For 1000 annotations, this takes less than 0.1ms.
+        /// Finds the nearest visible annotation to the mouse position within threshold.
+        /// Uses squared distance for performance (avoids sqrt).
         /// </summary>
         private int? FindNearestAnnotationFromCache(Point mousePosition, double threshold)
         {
-            if (cachedScreenPositions.Count == 0) return null;
+            int count = Math.Min(cachedScreenPositions.Count, annotations.Count);
+            if (count == 0) return null;
 
             int nearestIndex = -1;
             double minDistanceSq = threshold * threshold;
             double mouseX = mousePosition.X;
             double mouseY = mousePosition.Y;
 
-            // Simple linear scan through cached positions - very fast for thousands of items
-            for (int i = 0; i < cachedScreenPositions.Count; i++)
+            for (int i = 0; i < count; i++)
             {
-                if (i >= annotations.Count) break;
-                
                 Annotation3D annotation = annotations[i];
                 if (!annotation.Visible) continue;
 
                 var (screenX, screenY) = cachedScreenPositions[i];
-                
+
                 double dx = screenX - mouseX;
                 double dy = screenY - mouseY;
-                double distanceSq = dx * dx + dy * dy; // Avoid sqrt for performance
+                double distanceSq = dx * dx + dy * dy;
 
                 if (distanceSq < minDistanceSq)
                 {
@@ -635,7 +671,7 @@ namespace SurfaceChartPoC.Services
 
         /// <summary>
         /// Projects a single 3D data point to 2D screen coordinates on-demand.
-        /// Used when cached positions are not available.
+        /// Uses the improved projection with full rotation matrix.
         /// </summary>
         private (double x, double y) Project3DTo2DOnDemand(LightningChart chart, SphereDataPoint dataPoint)
         {
@@ -645,29 +681,49 @@ namespace SurfaceChartPoC.Services
             double chartHeight = chart.ActualHeight;
             double rotX = chart.View3D.Camera.RotationX * Math.PI / 180.0;
             double rotY = chart.View3D.Camera.RotationY * Math.PI / 180.0;
+            double rotZ = chart.View3D.Camera.RotationZ * Math.PI / 180.0;
+            double viewDistance = chart.View3D.Camera.ViewDistance;
 
-            double cosY = Math.Cos(rotY);
-            double sinY = Math.Sin(rotY);
             double cosX = Math.Cos(rotX);
             double sinX = Math.Sin(rotX);
+            double cosY = Math.Cos(rotY);
+            double sinY = Math.Sin(rotY);
+            double cosZ = Math.Cos(rotZ);
+            double sinZ = Math.Sin(rotZ);
+
             double centerX = chartWidth / 2.0;
             double centerY = chartHeight / 2.0;
-            double scale = Math.Min(chartWidth, chartHeight) / 300.0;
+            double baseScale = Math.Min(chartWidth, chartHeight) / 200.0;
+            double distanceScale = 100.0 / Math.Max(viewDistance, 10.0);
+            double scale = baseScale * distanceScale;
 
-            double x = dataPoint.X;
-            double y = dataPoint.Y;
-            double z = dataPoint.Z;
+            // Get dimensions for proper scaling
+            double dimWidth = chart.View3D.Dimensions.Width;
+            double dimHeight = chart.View3D.Dimensions.Height;
+            double dimDepth = chart.View3D.Dimensions.Depth;
+            double maxDim = Math.Max(Math.Max(dimWidth, dimHeight), dimDepth);
+            double normScale = maxDim > 0 ? 100.0 / maxDim : 1.0;
 
-            // Rotate around Y axis
+            double x = dataPoint.X * normScale;
+            double y = dataPoint.Y * normScale;
+            double z = dataPoint.Z * normScale;
+
+            // Apply full rotation matrix: Rz * Rx * Ry
+            // First rotate around Y (yaw)
             double x1 = x * cosY + z * sinY;
             double z1 = -x * sinY + z * cosY;
 
-            // Rotate around X axis
-            double y1 = y * cosX - z1 * sinX;
+            // Then rotate around X (pitch)
+            double y2 = y * cosX - z1 * sinX;
+            double z2 = y * sinX + z1 * cosX;
 
-            // Project to screen
-            double screenX = centerX + x1 * scale;
-            double screenY = centerY - y1 * scale;
+            // Finally rotate around Z (roll)
+            double x3 = x1 * cosZ - y2 * sinZ;
+            double y3 = x1 * sinZ + y2 * cosZ;
+
+            // Project to screen coordinates
+            double screenX = centerX + x3 * scale;
+            double screenY = centerY - y3 * scale;
 
             return (screenX, screenY);
         }
@@ -960,15 +1016,21 @@ namespace SurfaceChartPoC.Services
         /// <param name="mousePosition">Mouse position in screen coordinates</param>
         /// <param name="proximityThreshold">Distance threshold in pixels</param>
         /// <returns>True if selection state changed, false otherwise</returns>
-        public bool SelectAnnotationAtPosition(LightningChart chart, Point mousePosition, double proximityThreshold = 80.0)
+        /// <summary>
+        /// Selects the annotation nearest to the given mouse position.
+        /// </summary>
+        public bool SelectAnnotationAtPosition(LightningChart chart, Point mousePosition, double proximityThreshold = -1)
         {
             if (chart == null) return false;
 
-            // Update screen positions if needed
-            if (cachedScreenPositions.Count != dataPoints.Count)
+            // Use default threshold if not specified
+            if (proximityThreshold < 0)
             {
-                UpdateAllScreenPositions(chart);
+                proximityThreshold = DefaultProximityThreshold;
             }
+
+            // Always update positions for accurate selection
+            UpdateAllScreenPositions(chart);
 
             int? nearestIndex = annotations.Count > 0 
                 ? FindNearestAnnotationFromCache(mousePosition, proximityThreshold) 
