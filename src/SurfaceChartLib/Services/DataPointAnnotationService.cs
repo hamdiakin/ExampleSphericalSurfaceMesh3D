@@ -670,6 +670,7 @@ namespace SurfaceChartLib.Services
 
             if (visible)
             {
+                // Immediately show altitude annotations for all points
                 ShowAllAltitudeAnnotations();
             }
             else
@@ -702,7 +703,7 @@ namespace SurfaceChartLib.Services
         }
 
         /// <summary>
-        /// Clears altitude annotations from all data points.
+        /// Clears altitude annotations from all data points and restores original styling.
         /// </summary>
         private void ClearAllAltitudeAnnotations()
         {
@@ -710,6 +711,12 @@ namespace SurfaceChartLib.Services
 
             for (int i = 0; i < annotations.Count; i++)
             {
+                Annotation3D annotation = annotations[i];
+                
+                // Restore original styling
+                annotation.Shadow.Visible = false;
+                annotation.TextStyle.Font = new WpfFont("Segoe UI", 10, false, false);
+                
                 if (i == selectionIdx)
                 {
                     // Keep selected annotation text but remove altitude
@@ -718,11 +725,21 @@ namespace SurfaceChartLib.Services
                 else if (!isMouseTrackingEnabled)
                 {
                     // If mouse tracking is disabled, show regular text
+                    // Restore original text color
+                    if (i < dataPoints.Count)
+                    {
+                        annotation.TextStyle.Color = dataPoints[i].Color;
+                    }
                     UpdateAnnotationTextOptimized(i);
                 }
                 else
                 {
-                    annotations[i].Text = string.Empty;
+                    // Restore original text color
+                    if (i < dataPoints.Count)
+                    {
+                        annotation.TextStyle.Color = dataPoints[i].Color;
+                    }
+                    annotation.Text = string.Empty;
                 }
             }
         }
@@ -741,10 +758,14 @@ namespace SurfaceChartLib.Services
             double altitude = Math.Sqrt(dataPoint.X * dataPoint.X + dataPoint.Y * dataPoint.Y + dataPoint.Z * dataPoint.Z);
 
             stringBuilder.Clear();
-            stringBuilder.Append("Alt: ");
+            stringBuilder.Append("[").Append(index).Append("]\nAlt: ");
             stringBuilder.Append(altitude.ToString("F1"));
 
             annotation.Text = stringBuilder.ToString();
+            annotation.TextStyle.Font = new WpfFont("Segoe UI", 11, true, false);
+            annotation.TextStyle.Color = System.Windows.Media.Colors.White;
+            annotation.Shadow.Visible = true;
+            annotation.Shadow.Color = System.Windows.Media.Colors.Black;
             annotation.Anchor.Y = 1;
         }
 
@@ -770,6 +791,10 @@ namespace SurfaceChartLib.Services
             stringBuilder.Append(altitude.ToString("F1"));
 
             annotation.Text = stringBuilder.ToString();
+            annotation.TextStyle.Font = new WpfFont("Segoe UI", 14, true, false);
+            annotation.TextStyle.Color = System.Windows.Media.Colors.Yellow;
+            annotation.Shadow.Visible = true;
+            annotation.Shadow.Color = System.Windows.Media.Colors.Black;
             annotation.Anchor.Y = 1;
         }
 
