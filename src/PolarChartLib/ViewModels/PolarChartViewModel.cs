@@ -27,6 +27,12 @@ namespace PolarChartLib.ViewModels
         private readonly IAnnotationFactory annotationFactory;
         private IPolarChartRenderer? chartRenderer;
         private ProcessedDataSet? currentDataSet;
+        
+        /// <summary>
+        /// Event fired when a data point is deleted from the polar chart.
+        /// The demo app should subscribe to this to sync with shared data service.
+        /// </summary>
+        public event EventHandler<int>? DataPointDeleteRequested;
 
         private int? selectedIndex = null;
         private int? hoveredIndex = null;
@@ -352,7 +358,33 @@ namespace PolarChartLib.ViewModels
             var dataSet = dataProvider.GenerateDataSet(0);
             currentDataSet = dataSet;
             
+            // Update annotation count to match the data
+            annotationCount = dataSet.DataPoints.Count;
+            
+            // Clear selection if it's now out of range
+            if (selectedIndex.HasValue && selectedIndex.Value >= dataSet.DataPoints.Count)
+            {
+                selectedIndex = null;
+                UpdateSelectedAnnotationInfo();
+            }
+            
+            // Clear hover if it's now out of range
+            if (hoveredIndex.HasValue && hoveredIndex.Value >= dataSet.DataPoints.Count)
+            {
+                hoveredIndex = null;
+            }
+            
             RefreshAnnotations();
+            
+            // Auto-start animation if not running and we have data
+            if (!IsRunning && dataSet.DataPoints.Count > 0)
+            {
+                lastUpdateTime = DateTime.Now;
+                timer.Interval = TimeSpan.FromMilliseconds(textBoxInterval);
+                timer.Start();
+                stop = true;
+                start = false;
+            }
         }
 
         private void RefreshAnnotations()
@@ -418,6 +450,7 @@ namespace PolarChartLib.ViewModels
 
         /// <summary>
         /// Deletes the currently selected annotation.
+        /// Fires DataPointDeleteRequested event so the demo can sync with shared data service.
         /// </summary>
         public void DeleteSelectedAnnotation()
         {
@@ -428,28 +461,13 @@ namespace PolarChartLib.ViewModels
             if (indexToDelete < 0 || indexToDelete >= currentDataSet.DataPoints.Count)
                 return;
 
-            // Create a new list without the deleted point
-            var newPoints = new System.Collections.Generic.List<SphereDataPoint>(currentDataSet.DataPoints);
-            newPoints.RemoveAt(indexToDelete);
-
-            currentDataSet = new ProcessedDataSet
-            {
-                DataPoints = newPoints,
-                GeneratedAt = currentDataSet.GeneratedAt
-            };
-
-            // Update hovered index if needed
-            if (hoveredIndex.HasValue)
-            {
-                if (hoveredIndex.Value == indexToDelete)
-                    hoveredIndex = null;
-                else if (hoveredIndex.Value > indexToDelete)
-                    hoveredIndex--;
-            }
-
+            // Fire event so demo can delete from shared data service
+            // The shared data service will then notify both charts to refresh
+            DataPointDeleteRequested?.Invoke(this, indexToDelete);
+            
+            // Clear selection - the actual deletion will happen via RefreshData when shared data changes
             selectedIndex = null;
             UpdateSelectedAnnotationInfo();
-            RefreshAnnotations();
         }
 
         /// <summary>

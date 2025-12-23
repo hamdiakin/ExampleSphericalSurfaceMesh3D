@@ -431,9 +431,11 @@ namespace SurfaceChartLib.ViewModels
             {
                 if (SetProperty(ref isAltitudeAnnotationsVisible, value))
                 {
-                    if (dataPointAnnotationService != null)
+                    if (dataPointAnnotationService != null && chart != null)
                     {
+                        chart.BeginUpdate();
                         dataPointAnnotationService.SetAltitudeAnnotationsVisible(value);
+                        chart.EndUpdate();
                     }
                 }
             }

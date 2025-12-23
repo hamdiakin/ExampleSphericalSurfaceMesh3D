@@ -84,7 +84,16 @@ namespace Demo.ViewModels
             {
                 var annotationFactory = new SphereAnnotationFactory();
                 polarChartViewModel = new PolarChartViewModel(sharedDataSetProvider, annotationFactory);
+                
+                // Subscribe to deletion requests from polar chart to sync with shared data
+                polarChartViewModel.DataPointDeleteRequested += OnPolarChartDeleteRequested;
             }
+        }
+        
+        private void OnPolarChartDeleteRequested(object? sender, int indexToDelete)
+        {
+            // Delete from shared data service - this will notify both charts
+            sharedDataService.DeleteDataPoint(indexToDelete);
         }
 
 
@@ -188,6 +197,11 @@ namespace Demo.ViewModels
             animationTimer = null;
             
             surfaceChartViewModel?.Dispose();
+            
+            if (polarChartViewModel != null)
+            {
+                polarChartViewModel.DataPointDeleteRequested -= OnPolarChartDeleteRequested;
+            }
             
             sharedDataService.DataSetChanged -= OnDataSetChanged;
             sharedDataService.DataPointDeleted -= OnDataPointDeleted;
