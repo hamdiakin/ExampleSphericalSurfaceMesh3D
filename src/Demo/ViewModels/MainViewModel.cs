@@ -1,13 +1,11 @@
+using Common.Annotations;
+using Demo.Services;
+using PolarChartLib.ViewModels;
+using SurfaceChartLib.ViewModels;
 using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
-using Common.Annotations;
-using Common.Commands;
-using Common.Domain;
-using Demo.Services;
-using PolarChartLib.ViewModels;
-using SurfaceChartLib.ViewModels;
 
 namespace Demo.ViewModels
 {
@@ -34,7 +32,6 @@ namespace Demo.ViewModels
             GenerateDatasetCommand = new Common.Commands.RelayCommand(parameter => GenerateDataset());
         }
 
-        #region Properties
 
         public SurfaceChartViewModel? SurfaceChartViewModel
         {
@@ -65,15 +62,11 @@ namespace Demo.ViewModels
             }
         }
 
-        #endregion
 
-        #region Commands
 
         public ICommand GenerateDatasetCommand { get; }
 
-        #endregion
 
-        #region Chart Initialization
 
         public void InitializeSurfaceChartViewModel()
         {
@@ -94,9 +87,7 @@ namespace Demo.ViewModels
             }
         }
 
-        #endregion
 
-        #region Dataset Management
 
         public void GenerateDataset()
         {
@@ -136,9 +127,7 @@ namespace Demo.ViewModels
             polarChartViewModel?.RefreshData();
         }
 
-        #endregion
 
-        #region Event Handlers
 
         private void OnDataSetChanged(object? sender, DataSetChangedEventArgs e)
         {
@@ -172,7 +161,6 @@ namespace Demo.ViewModels
 
         #endregion
 
-        #region Animation
 
         private void StartAnimation()
         {

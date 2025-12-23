@@ -36,8 +36,6 @@ namespace PolarChartLib.ViewModels
         private LightningChartLib.WPF.ChartingMVVM.LightningChart? chart;
         private ViewPolar? viewPolar;
 
-        #region Dependency Properties
-
         public ICommand StartCommand => startCommand;
         public ICommand StopCommand => stopCommand;
 
@@ -140,11 +138,6 @@ namespace PolarChartLib.ViewModels
                 vm.RefreshAnnotations();
             }
         }
-
-        #endregion
-
-        #region Constructor
-
         public PolarChartViewModel() : this(null, null)
         {
         }
@@ -168,10 +161,6 @@ namespace PolarChartLib.ViewModels
             timer.Tick += DispatcherTimerTick;
         }
 
-        #endregion
-
-        #region Chart attachment
-
         public void AttachChart(LightningChartLib.WPF.ChartingMVVM.LightningChart chart, ViewPolar viewPolar)
         {
             this.chart = chart;
@@ -191,10 +180,6 @@ namespace PolarChartLib.ViewModels
 
             chartRenderer = new PolarChartRenderer(viewPolar, annotation);
         }
-
-        #endregion
-
-        #region Commands
 
         private void StopMethod(object? obj)
         {
@@ -251,20 +236,14 @@ namespace PolarChartLib.ViewModels
                 MessageBox.Show($"Error starting animation: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
         public void Start() => StartMethod(null);
 
         public void Stop() => StopMethod(null);
-
-        #endregion
-
-        #region Animation
 
         private void DispatcherTimerTick(object? sender, EventArgs e)
         {
             UpdateDataPoints();
         }
-
         private void UpdateDataPoints()
         {
             if (currentDataSet == null || chartRenderer == null)
@@ -282,10 +261,6 @@ namespace PolarChartLib.ViewModels
 
             RefreshAnnotations();
         }
-
-        #endregion
-
-        #region Annotations
 
         /// <summary>
         /// Refreshes the chart data from the external data provider.
@@ -316,10 +291,6 @@ namespace PolarChartLib.ViewModels
             chartRenderer.RenderAnnotations(specs, currentDataSet);
         }
 
-        #endregion
-
-        #region Mouse interaction
-
         public void HandleMouseMove(Point mousePosition, double chartWidth, double chartHeight)
         {
             if (!isMouseTrackingEnabledField || currentDataSet == null || chartRenderer == null || viewPolar == null)
@@ -347,8 +318,6 @@ namespace PolarChartLib.ViewModels
             selectedIndex = chartRenderer.FindNearestAnnotation(angle, amplitude);
             RefreshAnnotations();
         }
-
-        #endregion
     }
 }
 
