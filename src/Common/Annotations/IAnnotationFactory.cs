@@ -9,7 +9,8 @@ namespace Common.Annotations
             ProcessedDataSet dataSet,
             int? selectedIndex = null,
             int? hoveredIndex = null,
-            bool showAllLabels = false);
+            bool showAllLabels = false,
+            bool showAltitudeLabels = false);
     }
 }
 

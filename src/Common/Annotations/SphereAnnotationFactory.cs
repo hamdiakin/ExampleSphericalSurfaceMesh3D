@@ -10,7 +10,8 @@ namespace Common.Annotations
             ProcessedDataSet dataSet,
             int? selectedIndex = null,
             int? hoveredIndex = null,
-            bool showAllLabels = false)
+            bool showAllLabels = false,
+            bool showAltitudeLabels = false)
         {
             if (dataSet == null)
                 throw new ArgumentNullException(nameof(dataSet));
@@ -23,8 +24,23 @@ namespace Common.Annotations
                 bool isSelected = selectedIndex.HasValue && selectedIndex.Value == i;
                 bool isHovered = hoveredIndex.HasValue && hoveredIndex.Value == i;
 
+                // Calculate altitude (distance from center)
+                double altitude = Math.Sqrt(point.X * point.X + point.Y * point.Y + point.Z * point.Z);
+
                 string? label = null;
-                if (showAllLabels || isSelected || isHovered)
+                if (showAltitudeLabels)
+                {
+                    // Show altitude labels for all points
+                    if (isSelected)
+                    {
+                        label = $">>> [{i}] <<<\nX: {point.X:F1}\nY: {point.Y:F1}\nAlt: {altitude:F1}";
+                    }
+                    else
+                    {
+                        label = $"Alt: {altitude:F1}";
+                    }
+                }
+                else if (showAllLabels || isSelected || isHovered)
                 {
                     if (isSelected)
                     {

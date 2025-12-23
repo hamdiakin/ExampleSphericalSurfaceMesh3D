@@ -129,7 +129,8 @@ namespace SurfaceChartLib.Services
                 dataSet,
                 selectedAnnotationIndex,
                 hoveredAnnotationIndex,
-                !isMouseTrackingEnabled);
+                !isMouseTrackingEnabled,
+                isAltitudeAnnotationsVisible);
 
             var newAnnotations = new Annotation3D[annotationSpecs.Count];
             for (int i = 0; i < annotationSpecs.Count; i++)

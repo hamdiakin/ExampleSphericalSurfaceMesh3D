@@ -6,7 +6,7 @@
              xmlns:lcusb="http://schemas.lightningchart.com/chartingMVVM/"
              xmlns:vm="clr-namespace:PolarChartLib.ViewModels"
              mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800" Background="#202020">
     <UserControl.DataContext>
         <vm:PolarChartViewModel />
     </UserControl.DataContext>
@@ -28,16 +28,18 @@
             </lcusb:LightningChart.ViewPolar>
         </lcusb:LightningChart>
         <StackPanel Grid.Column="1" Margin="8" MinWidth="150">
-            <Label>Annotation Count</Label>
+            <Label Foreground="White">Annotation Count</Label>
             <TextBox Name="textBoxAnnotationCount" Text="{Binding annotationCount,Mode=TwoWay}"/>
             <Grid Height="8"/>
             
-            <Label>Update Interval (ms)</Label>
+            <Label Foreground="White">Update Interval (ms)</Label>
             <TextBox Name="textBoxInterval" Text="{Binding textBoxInterval,Mode=TwoWay}"/>
             <Grid Height="8"/>
             
             <CheckBox Name="checkBoxMouseTracking" IsChecked="{Binding isMouseTrackingEnabled,Mode=TwoWay}" 
-                      Content="Mouse Tracking" Margin="0,0,0,8"/>
+                      Content="Mouse Tracking" Foreground="White" Margin="0,0,0,4"/>
+            <CheckBox Name="checkBoxAltitudeLabels" IsChecked="{Binding isAltitudeAnnotationsVisible,Mode=TwoWay}" 
+                      Content="Show Altitude Labels" Foreground="White" Margin="0,0,0,8"/>
             
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Width="75" Command="{Binding StartCommand}" IsEnabled="{Binding start,Mode=TwoWay}" Name="buttonStart">Start</Button>
@@ -46,8 +48,8 @@
             </StackPanel>
             
             <Grid Height="16"/>
-            <TextBlock Text="Info:" FontWeight="Bold" Margin="0,0,0,4"/>
-            <TextBlock TextWrapping="Wrap" FontSize="10">
+            <TextBlock Text="Info:" FontWeight="Bold" Foreground="White" Margin="0,0,0,4"/>
+            <TextBlock TextWrapping="Wrap" FontSize="10" Foreground="Gray">
                 This demo shows the same dataset as the 3D spherical surface demo, rendered on a polar chart. 
                 Annotations rotate clockwise at individual paces.
             </TextBlock>

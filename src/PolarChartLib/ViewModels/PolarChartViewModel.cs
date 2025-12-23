@@ -31,6 +31,7 @@ namespace PolarChartLib.ViewModels
         private int? selectedIndex = null;
         private int? hoveredIndex = null;
         private bool isMouseTrackingEnabledField = true;
+        private bool isAltitudeAnnotationsVisibleField = false;
         private DateTime lastUpdateTime;
 
         private LightningChartLib.WPF.ChartingMVVM.LightningChart? chart;
@@ -135,6 +136,28 @@ namespace PolarChartLib.ViewModels
             if (d is PolarChartViewModel vm && e.NewValue is bool enabled)
             {
                 vm.isMouseTrackingEnabledField = enabled;
+                vm.RefreshAnnotations();
+            }
+        }
+
+        public static readonly DependencyProperty IsAltitudeAnnotationsVisibleProperty =
+            DependencyProperty.Register(
+                "isAltitudeAnnotationsVisible",
+                typeof(bool),
+                typeof(PolarChartViewModel),
+                new PropertyMetadata(false, OnIsAltitudeAnnotationsVisibleChanged));
+
+        public bool isAltitudeAnnotationsVisible
+        {
+            get => (bool)GetValue(IsAltitudeAnnotationsVisibleProperty);
+            set => SetValue(IsAltitudeAnnotationsVisibleProperty, value);
+        }
+
+        private static void OnIsAltitudeAnnotationsVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is PolarChartViewModel vm && e.NewValue is bool visible)
+            {
+                vm.isAltitudeAnnotationsVisibleField = visible;
                 vm.RefreshAnnotations();
             }
         }
@@ -286,7 +309,8 @@ namespace PolarChartLib.ViewModels
                 currentDataSet,
                 selectedIndex,
                 hoveredIndex,
-                !isMouseTrackingEnabledField);
+                !isMouseTrackingEnabledField,
+                isAltitudeAnnotationsVisibleField);
 
             chartRenderer.RenderAnnotations(specs, currentDataSet);
         }
