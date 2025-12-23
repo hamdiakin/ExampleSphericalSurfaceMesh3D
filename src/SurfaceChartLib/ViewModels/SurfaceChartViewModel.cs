@@ -421,8 +421,8 @@ namespace SurfaceChartLib.ViewModels
         }
 
         /// <summary>
-        /// Gets or sets whether altitude annotations are visible for all data points.
-        /// When enabled, displays the altitude (distance from center) value at each point.
+        /// Gets or sets whether altitude annotations are visible on the grid lines.
+        /// When enabled, displays the altitude/distance values (10, 20, 30, etc.) on the grid circles.
         /// </summary>
         public bool IsAltitudeAnnotationsVisible
         {
@@ -431,10 +431,11 @@ namespace SurfaceChartLib.ViewModels
             {
                 if (SetProperty(ref isAltitudeAnnotationsVisible, value))
                 {
-                    if (dataPointAnnotationService != null && chart != null)
+                    if (chart != null)
                     {
                         chart.BeginUpdate();
-                        dataPointAnnotationService.SetAltitudeAnnotationsVisible(value);
+                        // Show/hide altitude labels on grid circles
+                        chartSetupService.SetAltitudeAnnotationsVisible(value);
                         chart.EndUpdate();
                     }
                 }

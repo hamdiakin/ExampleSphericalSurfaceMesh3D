@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Windows.Media;
 using LightningChartLib.WPF.Charting;
 using LightningChartLib.WPF.Charting.Annotations;
@@ -14,6 +16,7 @@ namespace SurfaceChartLib.Services
     internal class ChartSetupService
     {
         private readonly SphericalDataService dataService;
+        private readonly List<Annotation3D> altitudeAnnotations = new List<Annotation3D>();
 
         public ChartSetupService(SphericalDataService dataService)
         {
@@ -51,7 +54,9 @@ namespace SurfaceChartLib.Services
 
         public SurfaceMeshSeries3D CreateHeadingGrid(View3D view3D, bool isVisible)
         {
-            SphericalPoint[,] sphericalHeadingFlatGrid = dataService.CreateHeadingGridData(100, 15, 10);
+            int distanceStep = 10;
+            int maxRadius = 100;
+            SphericalPoint[,] sphericalHeadingFlatGrid = dataService.CreateHeadingGridData(maxRadius, 15, distanceStep);
             SurfacePoint[,] flatGridData = sphericalHeadingFlatGrid.ToCartesian();
 
             SurfaceMeshSeries3D grid = new SurfaceMeshSeries3D(view3D, Axis3DBinding.Primary, Axis3DBinding.Primary, Axis3DBinding.Primary)
@@ -63,8 +68,71 @@ namespace SurfaceChartLib.Services
             ConfigureHeadingGrid(grid, flatGridData, isVisible);
             view3D.SurfaceMeshSeries3D.Add(grid);
 
+            // Create altitude annotations for each distance circle
+            CreateAltitudeAnnotations(view3D, maxRadius, distanceStep, isVisible);
+
             return grid;
         }
+
+        /// <summary>
+        /// Creates annotations showing altitude/distance values on the grid circles.
+        /// </summary>
+        private void CreateAltitudeAnnotations(View3D view3D, int maxRadius, int distanceStep, bool isVisible)
+        {
+            // Clear any existing altitude annotations
+            foreach (var ann in altitudeAnnotations)
+            {
+                view3D.Annotations.Remove(ann);
+            }
+            altitudeAnnotations.Clear();
+
+            // Create annotation for each distance circle (10, 20, 30, ..., 100)
+            for (int distance = distanceStep; distance <= maxRadius; distance += distanceStep)
+            {
+                // Place annotation at heading 0 (positive X axis direction)
+                Annotation3D annotation = new Annotation3D(view3D, Axis3DBinding.Primary, Axis3DBinding.Primary, Axis3DBinding.Primary)
+                {
+                    TargetCoordinateSystem = AnnotationTargetCoordinates.AxisValues
+                };
+
+                annotation.LocationCoordinateSystem = CoordinateSystem.AxisValues;
+                // Position on the X axis (heading = 0, elevation = 0)
+                annotation.LocationAxisValues.SetValues(distance, 0, 0);
+                annotation.TargetAxisValues.SetValues(distance, 0, 0);
+                
+                annotation.Style = AnnotationStyle.Rectangle;
+                annotation.Text = distance.ToString();
+                annotation.TextStyle.Font = new WpfFont("Segoe UI", 10, true, false);
+                annotation.TextStyle.Color = Colors.Cyan;
+                annotation.AllowUserInteraction = false;
+                annotation.Anchor.X = 0.5;
+                annotation.Anchor.Y = 0.5;
+                annotation.Fill.Style = RectFillStyle.None;
+                annotation.BorderVisible = false;
+                annotation.Shadow.Visible = true;
+                annotation.Shadow.Color = Colors.Black;
+                annotation.Visible = isVisible;
+
+                view3D.Annotations.Add(annotation);
+                altitudeAnnotations.Add(annotation);
+            }
+        }
+
+        /// <summary>
+        /// Sets the visibility of altitude annotations.
+        /// </summary>
+        public void SetAltitudeAnnotationsVisible(bool visible)
+        {
+            foreach (var annotation in altitudeAnnotations)
+            {
+                annotation.Visible = visible;
+            }
+        }
+
+        /// <summary>
+        /// Gets the altitude annotations for external access.
+        /// </summary>
+        public IReadOnlyList<Annotation3D> AltitudeAnnotations => altitudeAnnotations.AsReadOnly();
 
         public Annotation3D CreateMouseTrackAnnotation(View3D view3D)
         {
