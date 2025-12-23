@@ -1,4 +1,5 @@
 using Common.Annotations;
+using Common.Commands;
 using Demo.Services;
 using PolarChartLib.ViewModels;
 using SurfaceChartLib.ViewModels;
@@ -19,6 +20,7 @@ namespace Demo.ViewModels
         private DispatcherTimer? animationTimer;
         private DateTime lastUpdateTime;
         private bool isMouseTrackingEnabled = true;
+        private bool isAnimationRunning = true;
 
         public MainViewModel()
         {
@@ -29,7 +31,9 @@ namespace Demo.ViewModels
             sharedDataService.DataSetChanged += OnDataSetChanged;
             sharedDataService.DataPointDeleted += OnDataPointDeleted;
             
-            GenerateDatasetCommand = new Common.Commands.RelayCommand(parameter => GenerateDataset());
+            GenerateDatasetCommand = new RelayCommand(parameter => GenerateDataset());
+            StartAnimationCommand = new RelayCommand(_ => StartAllAnimations(), _ => !IsAnimationRunning);
+            StopAnimationCommand = new RelayCommand(_ => StopAllAnimations(), _ => IsAnimationRunning);
         }
 
 
@@ -65,6 +69,25 @@ namespace Demo.ViewModels
 
 
         public ICommand GenerateDatasetCommand { get; }
+        public ICommand StartAnimationCommand { get; }
+        public ICommand StopAnimationCommand { get; }
+
+        /// <summary>
+        /// Gets or sets whether animations are running on both charts.
+        /// </summary>
+        public bool IsAnimationRunning
+        {
+            get => isAnimationRunning;
+            private set
+            {
+                if (SetProperty(ref isAnimationRunning, value))
+                {
+                    // Notify commands to re-evaluate CanExecute
+                    (StartAnimationCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    (StopAnimationCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                }
+            }
+        }
 
 
 
@@ -166,6 +189,26 @@ namespace Demo.ViewModels
                     // Selection will be cleared when charts refresh
                 }
             }
+        }
+
+        /// <summary>
+        /// Starts animations on both charts.
+        /// </summary>
+        public void StartAllAnimations()
+        {
+            surfaceChartViewModel?.StartAnimation();
+            polarChartViewModel?.Start();
+            IsAnimationRunning = true;
+        }
+
+        /// <summary>
+        /// Stops animations on both charts.
+        /// </summary>
+        public void StopAllAnimations()
+        {
+            surfaceChartViewModel?.StopAnimation();
+            polarChartViewModel?.Stop();
+            IsAnimationRunning = false;
         }
 
         private void StartAnimation()

@@ -816,6 +816,27 @@ namespace SurfaceChartLib.ViewModels
 
         #region Data Point Animation
 
+        /// <summary>
+        /// Gets whether the animation is currently running.
+        /// </summary>
+        public bool IsAnimationRunning => dataPointUpdateTimer != null && dataPointUpdateTimer.IsEnabled;
+
+        /// <summary>
+        /// Starts the data point animation.
+        /// </summary>
+        public void StartAnimation()
+        {
+            StartDataPointAnimation();
+        }
+
+        /// <summary>
+        /// Stops the data point animation.
+        /// </summary>
+        public void StopAnimation()
+        {
+            StopDataPointAnimation();
+        }
+
         private void StartDataPointAnimation()
         {
             if (dataPointUpdateTimer != null)
