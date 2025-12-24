@@ -30,52 +30,61 @@ namespace PolarChartLib.Services
             if (specs == null || dataSet == null)
                 return;
 
-            annotationCollection.Clear();
-            annotationCache.Clear();
+            // Ensure collection can hold the new count
+            // We do NOT clear the collection here, we reuse existing items.
+            
+            // First, hide any extra annotations if we have fewer specs than current annotations
+            for (int i = specs.Count; i < annotationCollection.Count; i++)
+            {
+                annotationCollection[i].Visible = false;
+            }
 
+            // Update existing or add new annotations
             for (int i = 0; i < specs.Count; i++)
             {
                 var spec = specs[i];
                 if (spec is ArrowAnnotationSpec arrowSpec)
                 {
-                    var annotation = CreatePolarAnnotationFromSpec(arrowSpec, i, dataSet);
-                    if (annotation != null)
+                    if (i < annotationCollection.Count)
                     {
-                        annotationCollection.Add(annotation);
-                        annotationCache[spec.Id] = annotation;
+                        // Reuse existing annotation
+                        var annotation = annotationCollection[i];
+                        UpdateCallbackAnnotation(annotation, arrowSpec, i, dataSet);
+                        annotation.Visible = true;
+                    }
+                    else
+                    {
+                        // Create new annotation
+                        var annotation = CreatePolarAnnotationFromSpec(arrowSpec, i, dataSet);
+                        if (annotation != null)
+                        {
+                            annotationCollection.Add(annotation);
+                        }
                     }
                 }
             }
         }
 
-        private AnnotationPolar? CreatePolarAnnotationFromSpec(ArrowAnnotationSpec spec, int index, ProcessedDataSet dataSet)
+        private void UpdateCallbackAnnotation(AnnotationPolar annotation, ArrowAnnotationSpec spec, int index, ProcessedDataSet dataSet)
         {
-            if (viewPolar == null || viewPolar.Axes == null || viewPolar.Axes.Count == 0)
-                return null;
-
-            if (index >= dataSet.DataPoints.Count)
-                return null;
+             if (index >= dataSet.DataPoints.Count)
+             {
+                 annotation.Visible = false;
+                 return;
+             }
 
             var dataPoint = dataSet.DataPoints[index];
-
             var (azimuth, _, _) = dataPoint.ToSpherical();
             double amplitude = Math.Sqrt(dataPoint.X * dataPoint.X + dataPoint.Y * dataPoint.Y);
 
-            var annotation = new AnnotationPolar(viewPolar, viewPolar.Axes[0]);
-
-            annotation.Style = AnnotationStyle.Arrow;
-            annotation.LocationCoordinateSystem = CoordinateSystem.AxisValues;
-            annotation.LocationAxisValues.Angle = 0;
-            annotation.LocationAxisValues.Amplitude = 0;
+            // Update positions
             annotation.TargetAxisValues.Angle = azimuth;
             annotation.TargetAxisValues.Amplitude = amplitude;
 
-            annotation.ArrowStyleBegin = ArrowStyle.None;
-            annotation.ArrowStyleEnd = ArrowStyle.Arrow;
+            // Update styling
             annotation.ArrowLineStyle.Color = spec.Color;
-            annotation.AllowUserInteraction = false;
 
-            if (spec.IsSelected)
+             if (spec.IsSelected)
             {
                 annotation.ArrowLineStyle.Width = 6;
                 annotation.ArrowLineStyle.Color = Colors.Yellow;
@@ -99,12 +108,38 @@ namespace PolarChartLib.Services
                 {
                     annotation.TextStyle.Font = new WpfFont("Segoe UI", 12, true, false);
                 }
+                else
+                {
+                     // Reset font if needed, or keep default
+                     annotation.TextStyle.Font = new WpfFont("Segoe UI", 10, false, false);
+                }
             }
             else
             {
                 annotation.TextStyle.Visible = false;
             }
+        }
 
+        private AnnotationPolar? CreatePolarAnnotationFromSpec(ArrowAnnotationSpec spec, int index, ProcessedDataSet dataSet)
+        {
+            if (viewPolar == null || viewPolar.Axes == null || viewPolar.Axes.Count == 0)
+                return null;
+
+            // Reuse the update logic for consistency
+            var annotation = new AnnotationPolar(viewPolar, viewPolar.Axes[0]);
+            
+            annotation.Style = AnnotationStyle.Arrow;
+            annotation.LocationCoordinateSystem = CoordinateSystem.AxisValues;
+            
+            // Fixed origin for vector style
+            annotation.LocationAxisValues.Angle = 0;
+            annotation.LocationAxisValues.Amplitude = 0;
+            
+            annotation.ArrowStyleBegin = ArrowStyle.None;
+            annotation.ArrowStyleEnd = ArrowStyle.Arrow;
+            annotation.AllowUserInteraction = false;
+
+            UpdateCallbackAnnotation(annotation, spec, index, dataSet);
             return annotation;
         }
 
@@ -119,6 +154,8 @@ namespace PolarChartLib.Services
             for (int i = 0; i < annotationCollection.Count; i++)
             {
                 var annotation = annotationCollection[i];
+                if (!annotation.Visible) continue; // Skip hidden pooled items
+
                 double targetAngle = annotation.TargetAxisValues.Angle;
                 double targetAmplitude = annotation.TargetAxisValues.Amplitude;
 

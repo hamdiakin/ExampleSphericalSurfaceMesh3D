@@ -103,7 +103,7 @@ namespace SurfaceChartLib.Services
                 annotation.Style = AnnotationStyle.Rectangle;
                 annotation.Text = distance.ToString();
                 annotation.TextStyle.Font = new WpfFont("Segoe UI", 10, true, false);
-                annotation.TextStyle.Color = Colors.Cyan;
+                annotation.TextStyle.Color = Colors.White;
                 annotation.AllowUserInteraction = false;
                 annotation.Anchor.X = 0.5;
                 annotation.Anchor.Y = 0.5;
