@@ -75,7 +75,8 @@ namespace SurfaceChartLib.Services
         }
 
         /// <summary>
-        /// Creates annotations showing altitude/distance values on the grid circles.
+        /// Creates annotations showing altitude/distance values on the equator line at the outermost radius.
+        /// Annotations are placed every 15 degrees of heading, matching the heading grid pattern.
         /// </summary>
         private void CreateAltitudeAnnotations(View3D view3D, int maxRadius, int distanceStep, bool isVisible)
         {
@@ -86,22 +87,33 @@ namespace SurfaceChartLib.Services
             }
             altitudeAnnotations.Clear();
 
-            // Create annotation for each distance circle (10, 20, 30, ..., 100)
-            for (int distance = distanceStep; distance <= maxRadius; distance += distanceStep)
+            // Create annotations along the equator (elevation = 0) at the outermost radius
+            // Every 15 degrees of heading, matching the heading grid pattern
+            double headingStep = 15.0;
+            double elevation = 0.0; // Equator line
+            double distance = maxRadius; // Outermost line
+
+            for (double heading = 0; heading < 360; heading += headingStep)
             {
-                // Place annotation at heading 0 (positive X axis direction)
+                // Convert spherical coordinates to Cartesian (x, y, z)
+                // For elevation = 0: x = distance * cos(heading), y = 0, z = distance * sin(heading)
+                double headingRad = heading * Math.PI / 180.0;
+                double x = distance * Math.Cos(headingRad);
+                double y = 0; // Elevation = 0 means y = 0
+                double z = distance * Math.Sin(headingRad);
+
                 Annotation3D annotation = new Annotation3D(view3D, Axis3DBinding.Primary, Axis3DBinding.Primary, Axis3DBinding.Primary)
                 {
                     TargetCoordinateSystem = AnnotationTargetCoordinates.AxisValues
                 };
 
                 annotation.LocationCoordinateSystem = CoordinateSystem.AxisValues;
-                // Position on the X axis (heading = 0, elevation = 0)
-                annotation.LocationAxisValues.SetValues(distance, 0, 0);
-                annotation.TargetAxisValues.SetValues(distance, 0, 0);
+                // Position on the equator at the outermost radius
+                annotation.LocationAxisValues.SetValues(x, y, z);
+                annotation.TargetAxisValues.SetValues(x, y, z);
                 
                 annotation.Style = AnnotationStyle.Rectangle;
-                annotation.Text = distance.ToString();
+                annotation.Text = ((int)heading).ToString();
                 annotation.TextStyle.Font = new WpfFont("Segoe UI", 10, true, false);
                 annotation.TextStyle.Color = Colors.White;
                 annotation.AllowUserInteraction = false;
