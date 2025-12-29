@@ -98,6 +98,9 @@ namespace Demo.ViewModels
                 var annotationFactory = new SphereAnnotationFactory();
                 surfaceChartViewModel = new SurfaceChartViewModel(sharedDataSetProvider, annotationFactory);
                 surfaceChartViewModel.IsMouseTrackingEnabled = isMouseTrackingEnabled;
+                
+                // Subscribe to deletion requests from surface chart to sync with shared data
+                surfaceChartViewModel.DataPointDeleteRequested += OnSurfaceChartDeleteRequested;
             }
         }
 
@@ -114,6 +117,12 @@ namespace Demo.ViewModels
         }
         
         private void OnPolarChartDeleteRequested(object? sender, int indexToDelete)
+        {
+            // Delete from shared data service - this will notify both charts
+            sharedDataService.DeleteDataPoint(indexToDelete);
+        }
+
+        private void OnSurfaceChartDeleteRequested(object? sender, int indexToDelete)
         {
             // Delete from shared data service - this will notify both charts
             sharedDataService.DeleteDataPoint(indexToDelete);
@@ -184,10 +193,18 @@ namespace Demo.ViewModels
             if (surfaceChartViewModel?.SelectedAnnotationIndex.HasValue == true)
             {
                 int indexToDelete = surfaceChartViewModel.SelectedAnnotationIndex.Value;
-                if (sharedDataService.DeleteDataPoint(indexToDelete))
-                {
-                    // Selection will be cleared when charts refresh
-                }
+                // Use the same event-based approach as button click
+                OnSurfaceChartDeleteRequested(surfaceChartViewModel, indexToDelete);
+            }
+        }
+
+        public void HandlePolarChartDeletion()
+        {
+            if (polarChartViewModel?.SelectedAnnotationIndex.HasValue == true)
+            {
+                int indexToDelete = polarChartViewModel.SelectedAnnotationIndex.Value;
+                // Use the same event-based approach as button click
+                OnPolarChartDeleteRequested(polarChartViewModel, indexToDelete);
             }
         }
 
@@ -239,7 +256,11 @@ namespace Demo.ViewModels
             animationTimer?.Stop();
             animationTimer = null;
             
-            surfaceChartViewModel?.Dispose();
+            if (surfaceChartViewModel != null)
+            {
+                surfaceChartViewModel.DataPointDeleteRequested -= OnSurfaceChartDeleteRequested;
+                surfaceChartViewModel.Dispose();
+            }
             
             if (polarChartViewModel != null)
             {

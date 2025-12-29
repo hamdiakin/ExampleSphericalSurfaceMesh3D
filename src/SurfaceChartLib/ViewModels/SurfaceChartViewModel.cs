@@ -370,6 +370,16 @@ namespace SurfaceChartLib.ViewModels
 
         #endregion
 
+        #region Events
+
+        /// <summary>
+        /// Event fired when a data point deletion is requested.
+        /// The index parameter indicates which data point should be deleted.
+        /// </summary>
+        public event EventHandler<int>? DataPointDeleteRequested;
+
+        #endregion
+
         #region Properties - Annotation Management
 
         public string AnnotationCountText
@@ -490,14 +500,14 @@ namespace SurfaceChartLib.ViewModels
             if (dataPointAnnotationService == null || chart == null) return;
 
             var dataProvider = externalDataProvider ?? new SphereDataSetProvider();
-            var dataSet = dataProvider.GenerateDataSet(0);
+            var dataSet = dataProvider.GenerateDataSet(0); // Count parameter is ignored by SharedDataSetProvider
             int pointCount = dataSet.DataPoints.Count;
             
-            if (pointCount > 0)
-            {
-                dataPointAnnotationService.GenerateDataPoints(pointCount);
-                UpdateAnnotationCountText();
-            }
+            // Regenerate all data points from the current shared dataset
+            chart.BeginUpdate();
+            dataPointAnnotationService.GenerateDataPoints(pointCount);
+            UpdateAnnotationCountText();
+            chart.EndUpdate();
         }
 
         private void InitializeViewReference()
@@ -742,13 +752,18 @@ namespace SurfaceChartLib.ViewModels
         {
             if (dataPointAnnotationService == null || chart == null) return;
 
-            chart.BeginUpdate();
-            if (dataPointAnnotationService.DeleteSelectedAnnotation())
-            {
-                UpdateAnnotationCountText();
-                UpdateSelectedAnnotationInfo();
-            }
-            chart.EndUpdate();
+            if (!dataPointAnnotationService.SelectedAnnotationIndex.HasValue)
+                return;
+
+            int indexToDelete = dataPointAnnotationService.SelectedAnnotationIndex.Value;
+
+            // Fire event so demo can delete from shared data service
+            // The shared data service will then notify both charts to refresh
+            DataPointDeleteRequested?.Invoke(this, indexToDelete);
+            
+            // Clear selection - the actual deletion will happen via RefreshData when shared data changes
+            dataPointAnnotationService.ClearSelection();
+            UpdateSelectedAnnotationInfo();
         }
 
         private void ExecuteClearSelection()

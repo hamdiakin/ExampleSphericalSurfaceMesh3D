@@ -156,6 +156,16 @@ namespace SurfaceChartLib.Services
                     cachedScreenPositions.Add((0, 0));
                 }
             }
+
+            // Ensure text state matches mouse tracking setting
+            if (isMouseTrackingEnabled)
+            {
+                ClearAllAnnotationTexts();
+            }
+            else
+            {
+                ShowAllAnnotationTexts();
+            }
         }
 
         public void ClearExistingData()
@@ -386,6 +396,10 @@ namespace SurfaceChartLib.Services
             if (!string.IsNullOrEmpty(spec.Label))
             {
                 annotation.Text = spec.Label;
+            }
+            else
+            {
+                annotation.Text = string.Empty; // Clear any default text
             }
 
             if (spec.IsSelected)

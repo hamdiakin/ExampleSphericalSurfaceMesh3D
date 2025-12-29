@@ -34,6 +34,11 @@ namespace PolarChartLib.ViewModels
         /// </summary>
         public event EventHandler<int>? DataPointDeleteRequested;
 
+        /// <summary>
+        /// Gets the index of the currently selected annotation, or null if none is selected.
+        /// </summary>
+        public int? SelectedAnnotationIndex => selectedIndex;
+
         private int? selectedIndex = null;
         private int? hoveredIndex = null;
         private bool isMouseTrackingEnabledField = true;

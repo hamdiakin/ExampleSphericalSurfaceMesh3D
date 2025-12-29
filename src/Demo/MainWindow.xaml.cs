@@ -94,14 +94,22 @@ namespace Demo
             }
         }
 
-        // Handle keyboard delete key for surface chart
+        // Handle keyboard delete key for both charts
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
             
             if (e.Key == Key.Delete && viewModel != null)
             {
-                viewModel.HandleSurfaceChartDeletion();
+                // Try surface chart first, then polar chart
+                if (viewModel.SurfaceChartViewModel?.SelectedAnnotationIndex.HasValue == true)
+                {
+                    viewModel.HandleSurfaceChartDeletion();
+                }
+                else if (viewModel.PolarChartViewModel?.SelectedAnnotationIndex.HasValue == true)
+                {
+                    viewModel.HandlePolarChartDeletion();
+                }
                 UpdatePointCountLabel();
             }
         }

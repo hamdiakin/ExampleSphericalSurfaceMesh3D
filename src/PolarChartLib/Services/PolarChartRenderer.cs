@@ -78,7 +78,10 @@ namespace PolarChartLib.Services
             double amplitude = Math.Sqrt(dataPoint.X * dataPoint.X + dataPoint.Y * dataPoint.Y);
 
             // Update positions
-            annotation.TargetAxisValues.Angle = azimuth;
+            // LightningChart polar chart has 0° at top (12 o'clock), but our azimuth has 0° at right (3 o'clock)
+            // Adjust by -90° to align: 0° (right) → -90° → 270° (top in polar chart)
+            double polarAngle = (azimuth - 90.0 + 360.0) % 360.0;
+            annotation.TargetAxisValues.Angle = polarAngle;
             annotation.TargetAxisValues.Amplitude = amplitude;
 
             // Update styling
@@ -117,6 +120,7 @@ namespace PolarChartLib.Services
             else
             {
                 annotation.TextStyle.Visible = false;
+                annotation.Text = string.Empty; // Clear any default text
             }
         }
 

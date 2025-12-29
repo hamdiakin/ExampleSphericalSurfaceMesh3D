@@ -43,6 +43,10 @@
             <!-- Divider -->
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="Gray"/>
             
+            <!-- Right: Polar Chart (2D) --><!--
+            <Grid Grid.Column="2" Name="gridPolarChart" Background="#1A1A1A">
+                <polar:PolarChartView />
+            </Grid>-->
 
         </Grid>
     </Grid>
